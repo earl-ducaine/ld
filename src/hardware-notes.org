@@ -1,0 +1,21 @@
+
+
+
+
+
+* 8259A PIC
+  https://pdos.csail.mit.edu/6.828/2014/readings/hardware/8259A.pdf
+
+
+* Interupt state, AKA Interupt Priority Level (PIC)
+  Interupt state indicates what interupts will be accepted and and how
+  they will be handled.
+
+
+* Interupt priority level
+
+  Some system have a complex system of interupts which are
+  hierarchical, with higher levels inhibiting lower levels.
+  Presumably, the way that the lm used the 8259a is of the simple
+  variety (it's running a Unix variant after all), and just has them
+  on or off.
