@@ -6,7 +6,7 @@
 ;;; in the COPYING file in the root directory, i.e. the GPL.
 
 (asdf:defsystem :lambda-delta
-  :depends-on (:clx :trivial-gray-streams :cl-fad)
+  :depends-on (:clx :trivial-gray-streams :cl-fad :iterate)
   :serial t
   :components
   ((:module lisp
