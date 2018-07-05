@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 
+/* Copyright 2016-2017
    Daniel Seagraves <dseagrav@lunar-tokyo.net>
    Barry Silverman <barry@disus.com>
 
@@ -26,7 +26,7 @@ void lambda_dump(int opts);
 void debug_tx_rq(uint8_t rq,uint32_t addr,uint32_t data);
 void debug_connect();
 void debug_clockpulse();
-#endif 
+#endif
 void nubus_cycle(int sdu);
 void sducons_write(char data);
 
@@ -41,7 +41,7 @@ void audio_control(int onoff);
 
 // Host ethernet interface
 void ether_tx_pkt(uint8_t *data,uint32_t len);
-uint32_t ether_rx_pkt();
+uint32_t enet_rx_pkt();
 
 // Mouse interface callback
 void warp_mouse_callback(int cp);
@@ -71,7 +71,7 @@ typedef union rMI {
   struct {
     uint16_t Adr:9;
     uint8_t Opcode:5;
-    uint8_t Dest:2;    
+    uint8_t Dest:2;
   } __attribute__((packed));
   struct {
     uint8_t Displacement:6;
@@ -133,7 +133,7 @@ typedef union rlv1_ent {
   struct {
     uint8_t LV2_Block:7;
     uint8_t MB:2; // MB0, MB1
-    uint8_t MB_Valid:1; 
+    uint8_t MB_Valid:1;
   } __attribute__((packed));
 } lv1_ent;
 
@@ -153,7 +153,7 @@ typedef union rlv2_ctl_ent {
     uint8_t Meta:6;
     uint8_t Status:3;
     uint8_t AccHi:1; // Hi bit of access (it overlaps, see next struct)
-    uint8_t Force_Allowed:1;    
+    uint8_t Force_Allowed:1;
     uint8_t Packet_Code:2; // Byte code? ("packet size")
     uint8_t Packetize_Writes:1; // ???
     uint8_t Cache_Permit:1;
@@ -205,7 +205,7 @@ typedef union rDestSelect {
   struct F {
     uint16_t Padding:14;
     uint8_t  Spare:6;
-    uint8_t  Dest:6;    
+    uint8_t  Dest:6;
   } __attribute__((packed)) F;
 } DestSelect;
 
@@ -289,7 +289,7 @@ typedef union rUInst {
   // ALU/Byte destination select
   DestSelect    Destination;
   // Global (right half)
-  struct {    
+  struct {
     uint32_t rtHalf:30;
     uint8_t  Opcode:2;
     uint8_t  MSource:7;

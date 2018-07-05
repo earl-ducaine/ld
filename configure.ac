@@ -43,6 +43,8 @@ LIBSDL1=AS_IF([test "x$with_SDL1" != xno],
 			LIBS="$LIBS $SDL_LIBS"
 			])
 
+AM_CONDITIONAL([SDL1], [test "x$with_SDL1" != xno])
+
 # Checks for SDL2
 SDL2_VERSION=2.0.0
 LIBSDL2=AS_IF([test "x$with_SDL2" != xno],
@@ -53,6 +55,8 @@ LIBSDL2=AS_IF([test "x$with_SDL2" != xno],
 			CFLAGS="$CFLAGS $SDL_CFLAGS -DSDL2"
 			LIBS="$LIBS $SDL_LIBS"
 			])
+
+AM_CONDITIONAL([SDL2], [test "x$with_SDL2" != xno])
 
 # Blow up if we ended up with both SDLs or neither SDL
 AS_IF([test "$GFX_SDL1" = TRUE],
@@ -94,4 +98,3 @@ AC_FUNC_MALLOC
 AC_CHECK_FUNCS([atexit bzero gethostbyname memset socket strcasecmp strdup strtol])
 
 AC_OUTPUT(Makefile src/Makefile)
-
