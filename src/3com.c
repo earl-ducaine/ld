@@ -52,6 +52,7 @@
 #include "ld.h"
 #include "nubus.h"
 #include "sdu.h"
+#include "lambda_cpu.h"
 
 /* 3COM 3C400 Multibus Ethernet */
 /* Note that Lambda requires the byte-ordering switch to be ON!
@@ -103,7 +104,7 @@ uint8_t ether_rx_buf[0x800];
 #if defined (HAVE_LINUX_IF_H) && defined (HAVE_LINUX_IF_TUN_H)
 #define USES_ETHER_CODE "Linux tuntap"
 
-int ether_init() {
+int enet_init() {
   struct ifreq ifr;
   int fd,
     err,
@@ -148,7 +149,7 @@ void ether_tx_pkt(uint8_t *data,uint32_t len){
   }
 }
 
-uint32_t ether_rx_pkt(){
+uint32_t enet_rx_pkt(){
   ssize_t res = 0;
   if(ether_fd < 0){ return(0); }
   res = read(ether_fd,ether_rx_buf,(0x800-2));
@@ -169,7 +170,7 @@ uint32_t ether_rx_pkt(){
 
 char ether_bpfn[64];
 
-int ether_init(){
+int enet_init(){
   struct ifreq ifr;
   int fd, err, flags;
   int x=0;
@@ -272,11 +273,11 @@ unsigned int bpf_buf_offset = 0;
 unsigned int bpf_buf_length = 0;
 uint8_t ether_bpf_buf[0x800];
 
-uint32_t ether_rx_pkt() {
+uint32_t enet_rx_pkt() {
   ssize_t res = 0;
   struct bpf_hdr *bpf_header;
   if(ether_fd < 0){
-    perror("ether:ether_rx_pkt() ether_fd invalid");
+    perror("ether:enet_rx_pkt() ether_fd invalid");
     return 0;
   }
   if(bpf_buf_offset == 0){
@@ -325,7 +326,7 @@ uint32_t ether_rx_pkt() {
 #ifndef USES_ETHER_CODE
 #define USES_ETHER_CODE "null"
 
-int ether_init(){
+int enet_init(){
   return(0);
 }
 
@@ -333,7 +334,7 @@ void ether_tx_pkt(uint8_t *data __attribute__ ((unused)),uint32_t len __attribut
   return;
 }
 
-uint32_t ether_rx_pkt(){
+uint32_t enet_rx_pkt() {
   return(0);
 }
 #endif /* Stub code */
@@ -342,10 +343,10 @@ uint32_t ether_rx_pkt(){
 void enet_reset() {
   if (ether_fd < 0) {
     // tuntap initialization
-    ether_fd = ether_init();
+    ether_fd = enet_init();
     if (ether_fd < 1) {
       if (ether_fd < 0) {
-	perror("ether_init()");
+	perror("enet_init()");
       }
       ether_fd = -1;
     }
@@ -533,7 +534,7 @@ void enet_clock_pulse(){
     // Ethernet ready to take a packet?
     if(ETH_MECSR_MEBACK.AMSW == 1 && (ETH_MECSR_MEBACK.ABSW == 1 || ETH_MECSR_MEBACK.BBSW == 1)){
       // Yes
-      pktlen = ether_rx_pkt();
+      pktlen = enet_rx_pkt();
       if(pktlen > 0){
         // We can has packet!
         pktlen -= 4;
