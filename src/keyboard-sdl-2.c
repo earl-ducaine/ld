@@ -184,7 +184,6 @@ void kbd_handle_char(int scancode, int down) {
     }
   }
   // Check for console switch key
-
 #ifdef CONFIG_2X2
   if (sdlchar == SDL_SCANCODE_F9) {
     if (down) {
@@ -221,7 +220,6 @@ void kbd_handle_char(int scancode, int down) {
     }
     return;
   }
-
 #endif
 
   // For now, fold lower case to upper case (because we're ignoring

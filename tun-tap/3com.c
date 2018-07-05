@@ -135,7 +135,7 @@ int ether_init() {
   return fd;
 }
 
-void ether_tx_pkt(uint8_t *data,uint32_t len){
+void ether_tx_pkt(uint8_t* data, uint32_t len) {
   ssize_t res = 0;
   if(ether_fd < 0){
     perror("ether: ether_fd not valid");

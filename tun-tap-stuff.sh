@@ -15,4 +15,6 @@ sudo ip addr add 10.0.0.2/24 dev vm2
 sudo ip link set brm up
 sudo ip link set vm2 up
 
-sniff(iface="wifi0", prn=lambda x: x.summary())
+# sniff(iface="ldtap", prn=lambda x: x.summary())
+# sniff(iface="ldtap", prn=lambda x: x)
+#  sniff(iface="ldtap", prn=lambda x: x.show())

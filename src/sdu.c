@@ -153,7 +153,7 @@ extern share_struct_qs * share_struct;
 // Externals
 extern int ld_die_rq;
 extern int cp_state[2];
-extern struct lambdaState pS[2];
+extern struct lambdaState pS[];
 // Configuration items from kernel
 extern int disk_geometry_sph;
 // Band names

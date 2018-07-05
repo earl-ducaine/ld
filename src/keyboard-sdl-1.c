@@ -1,5 +1,4 @@
 
-
 #include <stdbool.h>
 #include <SDL.h>
 #include <SDL_keysym.h>
@@ -20,7 +19,6 @@ SDL_Surface *screen;
 SDL_TimerID SDLTimer;
 int video_width = VIDEO_WIDTH;
 int video_height = VIDEO_HEIGHT;
-
 
 void init_sdl_to_keysym_map(void){
   int x = 0;
@@ -73,8 +71,12 @@ void init_sdl_to_keysym_map(void){
   map['N'] = 0054; // N
   map['M'] = 0154; // M
 
-  map['['] = 0132; // Unshifted (, [ is shiftstate
-  map[']'] = 0137; // Unshifted ), ] is shiftstate
+  // map['['] = 0132; // Unshifted (, [ is shiftstate
+  // map[']'] = 0137; // Unshifted ), ] is shiftstate
+
+  map['('] = 0132; // Unshifted (, [ is shiftstate
+  map[')'] = 0137; // Unshifted ), ] is shiftstate
+
   map[';'] = 0173;
   map['`'] = 0077;
   // map['~'] = 061;               /* special treatment (this is too useful to remap) */
@@ -144,51 +146,49 @@ void init_sdl_to_keysym_map(void){
   modmap[SDLK_MENU] = KB_BB_RHYPER;
 }
 
-#ifdef SDL1
-void kbd_handle_char(int symcode, int down){
+void kbd_handle_char(int symcode, int down) {
   int sdlchar = symcode;
-  unsigned char outchar=0;
-
+  unsigned char outchar = 0;
   // Check for debug
   if(sdlchar == SDLK_F12){
-    if(down){
-      if(((kb_buckybits&KB_BB_LSHIFT)|(kb_buckybits&KB_BB_RSHIFT)) != 0){
-	printf("DEBUG: DUMP REQUESTED FROM CONSOLE\n");
-	lambda_dump(DUMP_ALL);
-	FB_dump(0);
-	FB_dump(1);
+    if (down) {
+      if (((kb_buckybits & KB_BB_LSHIFT) |
+	   (kb_buckybits & KB_BB_RSHIFT)) !=
+	  0) {
+        printf("DEBUG: DUMP REQUESTED FROM CONSOLE\n");
+        lambda_dump(DUMP_ALL);
+        FB_dump(0);
+        FB_dump(1);
       }else{
-	tapemaster_open_next();
+        tapemaster_open_next();
       }
     }
     return;
   }
-
   // Check for return-to-newboot key
   if(sdlchar == SDLK_F11){
     // Keystroke is control-meta-control-meta-<LINE>
     // 0020 0045 0026 0165 0036
-    if(down){
-      // I don't know how this translates to that, but it works.
-      // This is the sequence of bytes the ucode looks for.
-      put_rx_ring(active_console,0x60);
-      put_rx_ring(active_console,0x9F);
+    if (down) {
+      // I don't know how this translates to that, but it works.  This
+      // is the sequence of bytes the ucode looks for.
+      put_rx_ring(active_console, 0x60);
+      put_rx_ring(active_console, 0x9F);
     }
     return;
   }
-
   // Check for decapture/pointer-hide-show key
   if(sdlchar == SDLK_F10){
-    if(down){
-      if(mouse_capture != 0){
+    if(down) {
+      if(mouse_capture != 0) {
 	mouse_capture = 0;
-	if(mouse_op_mode == 0){
+	if(mouse_op_mode == 0) {
 	  SDL_WM_GrabInput(SDL_GRAB_OFF);
 	}
 	SDL_ShowCursor(SDL_ENABLE);
       }else{
 	mouse_capture = 1;
-	if(mouse_op_mode == 0){
+	if(mouse_op_mode == 0) {
 	  SDL_WM_GrabInput(SDL_GRAB_ON);
 	}
 	SDL_ShowCursor(SDL_DISABLE);
@@ -196,11 +196,10 @@ void kbd_handle_char(int symcode, int down){
     }
     return;
   }
-
   // Check for console switch key
 #ifdef CONFIG_2X2
   if(sdlchar == SDLK_F9){
-    if(down){
+    if(down) {
       // Switch active console
       active_console ^= 1;
       printf("CONSW: %d\n",active_console);
@@ -211,73 +210,101 @@ void kbd_handle_char(int symcode, int down){
       uint32_t *s = FB_Image[active_console];
       int i,j;
       for (i = 0; i < video_width; i++) {
-	for (j = 0; j < video_height; j++)
-	  *p++ = *s++;
+	for (j = 0; j < video_height; j++) {
+	  *(p++) = *(s++);
+	}
       }
       // Redraw it
       SDL_UpdateRect(screen, 0, 0, video_width, video_height);
       // Reset accumulation
-      u_minh = 0x7fffffff; u_maxh = 0; u_minv = 0x7fffffff; u_maxv = 0;
-      // If we are in shared mouse mode, move the pointer to where the new console thinks it should be
-      if(mouse_op_mode == 1 && cp_state[active_console] == 3){
-	warp_mouse_callback(active_console);
+      u_minh = 0x7fffffff;
+      u_maxh = 0;
+      u_minv = 0x7fffffff;
+      u_maxv = 0;
+      // If we are in shared mouse mode, move the pointer to where the
+      // new console thinks it should be.
+      if ((mouse_op_mode == 1) && (cp_state[active_console] == 3)) {
+        warp_mouse_callback(active_console);
       }
     }
     return;
   }
 #endif
 
-  /* for now, fold lower case to upper case */
-  /* (because we're ignoring modifiers) */
+  // For now, fold lower case to upper case (because we're ignoring
+  // modifiers)
   if (sdlchar >= 'a' && sdlchar <= 'z'){
     sdlchar -= ' ';
   }
-
   // Obtain keymap entry
   outchar = map[sdlchar];
-
-  // We send 3 characters. First is keycode, second is key state + bucky bits, third is source ID.
-  put_rx_ring(active_console,outchar); // Keycode
+  // We send 3 characters. First is keycode, second is key state +
+  // bucky bits, third is source ID.
+  //
+  // Keycode
+  put_rx_ring(active_console,outchar);
   // Next is key up/down state and bucky bits
   outchar = 0x80; // This is the "second byte" flag
-  if(down){
-    // Key Down
-    outchar |= 0x40; // Key Down Flag
-    if(modmap[sdlchar] != 0){
+  if (down) {
+    // Key Down (flag)
+    outchar |= 0x40;
+    if (modmap[sdlchar] != 0) {
       kb_buckybits |= modmap[sdlchar];
     }
     // Take "down" bucky bits
-    if(((kb_buckybits&KB_BB_LSHIFT)|(kb_buckybits&KB_BB_RSHIFT)) != 0){ outchar |= 0x20; }
-    if(((kb_buckybits&KB_BB_LCTL)|(kb_buckybits&KB_BB_RCTL)) != 0){ outchar |= 0x10; }
-    if(((kb_buckybits&KB_BB_LMETA)|(kb_buckybits&KB_BB_RMETA)) != 0){ outchar |= 0x08; }
-    if(((kb_buckybits&KB_BB_LSUPER)|(kb_buckybits&KB_BB_RSUPER)) != 0){ outchar |= 0x04; }
-    if(((kb_buckybits&KB_BB_LHYPER)|(kb_buckybits&KB_BB_RHYPER)) != 0){ outchar |= 0x02; }
-    if((kb_buckybits&KB_BB_GREEK) != 0){ outchar |= 0x01; }
-  }else{
+    if (((kb_buckybits&KB_BB_LSHIFT)|(kb_buckybits&KB_BB_RSHIFT)) != 0) {
+      outchar |= 0x20;
+    }
+    if (((kb_buckybits&KB_BB_LCTL)|(kb_buckybits&KB_BB_RCTL)) != 0){
+      outchar |= 0x10;
+    }
+    if (((kb_buckybits&KB_BB_LMETA)|(kb_buckybits&KB_BB_RMETA)) != 0){
+      outchar |= 0x08;
+    }
+    if (((kb_buckybits&KB_BB_LSUPER)|(kb_buckybits&KB_BB_RSUPER)) != 0){
+      outchar |= 0x04;
+    }
+    if (((kb_buckybits&KB_BB_LHYPER)|(kb_buckybits&KB_BB_RHYPER)) != 0){
+      outchar |= 0x02;
+    }
+    if ((kb_buckybits&KB_BB_GREEK) != 0){
+      outchar |= 0x01;
+    }
+  } else {
     // Key Up
-    if(modmap[sdlchar] != 0){
+    if (modmap[sdlchar] != 0) {
       kb_buckybits &= ~modmap[sdlchar];
     }
     // Take "up" bucky bits
-    if((kb_buckybits&KB_BB_MODELOCK) != 0){ outchar |= 0x10; }
-    if((kb_buckybits&KB_BB_ALTLOCK) != 0){ outchar |= 0x08; }
-    if((kb_buckybits&KB_BB_CAPSLOCK) != 0){ outchar |= 0x04; }
-    if((kb_buckybits&KB_BB_REPEAT) != 0){ outchar |= 0x02; }
-    if(((kb_buckybits&KB_BB_LTOP)|(kb_buckybits&KB_BB_RTOP)) != 0){ outchar |= 0x01; }
+    if((kb_buckybits&KB_BB_MODELOCK) != 0){
+      outchar |= 0x10;
+    }
+    if((kb_buckybits&KB_BB_ALTLOCK) != 0){
+      outchar |= 0x08;
+    }
+    if((kb_buckybits&KB_BB_CAPSLOCK) != 0){
+      outchar |= 0x04;
+    }
+    if((kb_buckybits&KB_BB_REPEAT) != 0){
+      outchar |= 0x02;
+    }
+    if(((kb_buckybits&KB_BB_LTOP)|(kb_buckybits&KB_BB_RTOP)) != 0){
+      outchar |= 0x01;
+    }
   }
   // Send result
-  put_rx_ring(active_console,outchar);
+  put_rx_ring(active_console, outchar);
   // Third byte is Source ID. (Newer Keyboard)
   put_rx_ring(active_console, 0x02);
   // printf("KB: Key event sent\n");
   vcmem_kb_int(active_console);
 }
 
-void sdl_system_shutdown_request(void){
+void sdl_system_shutdown_request(void) {
   exit(0);
 }
 
-void sdl_process_key(SDL_KeyboardEvent* ev, int updown){
+static void sdl_process_key(SDL_KeyboardEvent* ev, int updown) {
   kbd_handle_char(ev->keysym.sym, updown);
 }
 

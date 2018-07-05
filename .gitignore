@@ -46,3 +46,16 @@ src/Makefile
 src/config.h.in
 src/config.h
 src/stamp*
+callgrind.out*
+dlw-*
+#*#
+xl1200
+tapes
+TAGS
+rpc
+nsf
+lisp-sources
+*.log
+*.ilod
+tape2
+t18-tape
