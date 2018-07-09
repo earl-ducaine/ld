@@ -574,38 +574,53 @@ void lambda_dump(int opts){
     }
   }
   if(opts&DUMP_PDL){
-    printf("PDL Index = 0%.11o, PDL Pointer = %.11o, PDL_Addr_Hi = %o\n",pS[0].pdl_index_reg,pS[0].pdl_ptr_reg,pS[0].DP_Mode.PDL_Addr_Hi);
-    if(pS[0].DP_Mode.PDL_Addr_Hi != 0){ addr = 04000; }else{ addr = 0; }
+    printf("PDL Index = 0%.11o, PDL Pointer = %.11o, PDL_Addr_Hi = %o\n",
+	   pS[0].pdl_index_reg,
+	   pS[0].pdl_ptr_reg,
+	   pS[0].DP_Mode.PDL_Addr_Hi);
+    if (pS[0].DP_Mode.PDL_Addr_Hi != 0) {
+      addr = 04000;
+    } else {
+      addr = 0;
+    }
     x = addr+pS[0].pdl_ptr_reg;
-    while(x >= (int)addr){
+    while (x >= (int)addr) {
       Q tmp;
       tmp.raw = pS[0].Mmemory[x];
       printf("PDL[%o] = CDR %o DTP %.2o (%s) PTR 0x%.7x/0%.9o\n",
-	     (x-addr),tmp.cdr,tmp.dtp,dtp_str[tmp.dtp],tmp.ptr,tmp.ptr);
+	     (x-addr),
+	     tmp.cdr,
+	     tmp.dtp,
+	     dtp_str[tmp.dtp],
+	     tmp.ptr,
+	     tmp.ptr);
       x--;
     }
   }
-  if(opts&DUMP_P_MEM){
+  if (opts&DUMP_P_MEM) {
     addr = 0;
-    sprintf(ofn,"PMEM-%.2d.DUMP",dump_seq);
-    printf("Dumping Physical Memory to %s...\n",ofn);
-    output = fopen(ofn,"w+");
+    sprintf(ofn, "PMEM-%.2d.DUMP", dump_seq);
+    printf("Dumping Physical Memory to %s...\n", ofn);
+    output = fopen(ofn, "w+");
     if(!output){
-      printf("Can't open %s\n",ofn);
+      printf("Can't open %s\n", ofn);
       return;
     }
     // while(addr<0x1000000){ // 16MB
     while(addr<0x0800000){ // 8MB
-      uint32_t data = debug_mem_read(addr+3); data <<= 8;
-      data |= debug_mem_read(addr+2); data <<= 8;
-      data |= debug_mem_read(addr+1); data <<= 8;
+      uint32_t data = debug_mem_read(addr+3);
+      data <<= 8;
+      data |= debug_mem_read(addr+2);
+      data <<= 8;
+      data |= debug_mem_read(addr+1);
+      data <<= 8;
       data |= debug_mem_read(addr);
-      fprintf(output,"[0x%.6x] 0x%.8X\n",addr,data);
+      fprintf(output, "[0x%.6x] 0x%.8X\n", addr, data);
       addr += 4;
     }
     fclose(output);
   }
-  if(opts&DUMP_MID_MEM){
+  if (opts&DUMP_MID_MEM) {
     addr = 0;
     sprintf(ofn,"MIDMEM-%.2d.DUMP",dump_seq);
     printf("Dumping MID Memory to %s...\n",ofn);
