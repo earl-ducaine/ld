@@ -34,7 +34,6 @@ cp ~/.cache/lambda-delta/dj_full/l/ubin/bootstrap.lam-uload.7 bootstrap.lam-uloa
 cp ~/.cache/lambda-delta/dj_full/l/ubin/ulambda.lmc-sym.1762 ulambda.lmc-sym
 
 
-
 # Overwrite without warning!
 cat > ld.conf << EOT
 # LambdaDelta configuration file
@@ -53,7 +52,11 @@ EOT
 
 
 # Run, but not in network name space.  the lam emulator opens up a
-# telnet port 3627 on local host and hooks that up to the virtual lisp
+# telnet port 3627 on local host
+#
+# telnet localhost 3637
+#
+# and hooks that up to the virtual lisp
 # machine's serial port.
 
 
