@@ -1552,18 +1552,21 @@ int main(int argc, char *argv[]){
       // Update status line
       extern char tape_fn[];
       sprintf(statbuf,"LambdaDelta: VC %d | Tape: %s | ",active_console,tape_fn);
+      printf("LambdaDelta: VC %d | Tape: %s | ", active_console, tape_fn);
       switch(cp_state[active_console]){
-      case 0: // Cold (or under 8088 control!)
+      case 0:
+	// Cold (or under 8088 control!)
 	if(pS[active_console].cpu_die_rq){
 	  sprintf(statbuf,"%sCold Halted",statbuf);
 	}else{
 	  sprintf(statbuf,"%sCold Running",statbuf);
 	}
 	break;
-      case 1: // Bootstrapping
-	if(pS[active_console].cpu_die_rq){
+      case 1:
+	// Bootstrapping
+	if (pS[active_console].cpu_die_rq) {
 	  sprintf(statbuf,"%sCold Halted",statbuf);
-	}else{
+	} else {
 	  sprintf(statbuf,"%sCold Booting",statbuf);
 	}
 	break;
@@ -1586,8 +1589,7 @@ int main(int argc, char *argv[]){
 	break;
       }
       sprintf(statbuf,"%s | DT %ld",statbuf,(emu_time-real_time));
-
-
+      set_caption(statbuf);
 // #ifdef SDL1
 //       SDL_WM_SetCaption(statbuf, "LambdaDelta");
 // #endif
