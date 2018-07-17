@@ -2689,7 +2689,7 @@ void lambda_nubus_slave(int I) {
     }
     if (NUbus_Request == VM_READ) {
       NUbus_Data.word = pS[I].ConReg.word; // 0x80; // UINST-CLOCK-L-BIT
-      trace_log_3u("RG %d: CON REG read, data 0x%X\n",
+      trace_log_2u("RG %d: CON REG read, data 0x%X\n",
 		   I,
 		   NUbus_Data.word);
       NUbus_acknowledge=1;
@@ -2705,7 +2705,7 @@ void lambda_nubus_slave(int I) {
   case 0xFFF7FF:
     if (NUbus_Request == VM_BYTE_READ) {
       NUbus_Data.byte[NUbus_Address.Byte] = pS[I].ConReg.byte[NUbus_Address.Byte];
-      trace_log_3u("RG %d: CON REG byte read, data 0x%X\n",
+      trace_log_2u("RG %d: CON REG byte read, data 0x%X\n",
 	     I,
 	     NUbus_Data.byte[NUbus_Address.Byte]);
       NUbus_acknowledge=1;
@@ -2742,7 +2742,7 @@ void lambda_nubus_slave(int I) {
     break;
   }
   // Otherwise die
-  trace_log_3u("RG: Unimplemented address: 0x%X\n", NUbus_Address.Addr);
+  trace_log_1u("RG: Unimplemented address: 0x%X\n", NUbus_Address.Addr);
   pS[I].cpu_die_rq = 1;
 }
 
