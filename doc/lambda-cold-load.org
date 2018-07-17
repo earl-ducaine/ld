@@ -81,8 +81,14 @@
 						
    1. Begin by checking to see that all desired patches have been
       included in the world (i.e., their source files updated to
-      include all desired changes).  Once this has been accomplished,
-      decide which compiling strategy you wish to follow:
+      include all desired changes).  
+
+      #+BEGIN_SRC lisp :tangle no
+	  (load-patches)
+      #+END_SRC
+
+      Once this has been accomplished, decide which compiling strategy
+      you wish to follow:
 
       - If you wish to recompile all source files, evaluate the form
 

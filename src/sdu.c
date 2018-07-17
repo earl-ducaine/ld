@@ -33,15 +33,13 @@
 #include "tapemaster.h"
 #include "3com.h"
 #include "smd.h"
+#include "trace.h"
 
 #define RAM_TOP (1024 * 64)
 
 /* Motorola MC146818 RTC */
 uint32_t rtc_cycle_count;
 uint32_t rtc_addr; // Address Register
-
-// int debugging_enabled = global_debugging_sdu;
-int debugging_enabled = false;
 
 uint8_t RTC_Counter[10];
 // Counter map
@@ -309,70 +307,6 @@ char proc_conf_q_names[sizeof(processor_configuration_qs) / 4][64] = {
   "excelan_multibus_map_size"
 };
 
-// probably we'll need one for each number of parameters and type,
-// e.g.  log1d("With on number %d ~n" "1")
-void trace_log(const char* message) {
-  if(debugging_enabled) {
-    trace_log(message);
-  }
-}
-
-void trace_log1u(const char* message, unsigned i) {
-  if(debugging_enabled) {
-    // Sinner!
-    char buf[4096] = {'\0'};
-    sprintf(buf, message, i);
-    trace_log(buf);
-  }
-}
-
-void trace_log2u(const char* message, unsigned i, unsigned j) {
-  if(debugging_enabled) {
-    // Sinner!
-    char buf[4096] = {'\0'};
-    sprintf(buf, message, i, j);
-    trace_log(buf);
-  }
-}
-
-void trace_log3u(const char* message, unsigned i, unsigned j, unsigned k) {
-  if(debugging_enabled) {
-    // Sinner!
-    char buf[4096] = {'\0'};
-    sprintf(buf, message, i, j, k);
-    trace_log(buf);
-  }
-}
-
-void trace_log4u(const char* message, unsigned i, unsigned j, unsigned k,
-		 unsigned l) {
-  if(debugging_enabled) {
-    // Sinner!
-    char buf[4096] = {'\0'};
-    sprintf(buf, message, i, j, k, l);
-    trace_log(buf);
-  }
-}
-
-void trace_log5u(const char* message, unsigned i, unsigned j, unsigned k,
-		 unsigned l, unsigned m) {
-  if(debugging_enabled) {
-    // Sinner!
-    char buf[4096] = {'\0'};
-    sprintf(buf, message, i, j, k, l, m);
-    trace_log(buf);
-  }
-}
-
-void trace_log6u(const char* message, unsigned i, unsigned j, unsigned k,
-		 unsigned l, unsigned m, unsigned n) {
-  if(debugging_enabled) {
-    // Sinner!
-    char buf[4096] = {'\0'};
-    sprintf(buf, message, i, j, k, l, m, n);
-    trace_log(buf);
-  }
-}
 
 // Functions
 void sdu_init() {
@@ -426,7 +360,7 @@ void sdu_init() {
   // Reset PIC state
   {
     int x=0;
-    while(x < 3){
+    while(x < 3) {
       PIC[x].ISR = 0;
       PIC[x].IMR = 0;
       PIC[x].IRR = 0;
@@ -437,7 +371,7 @@ void sdu_init() {
   }
 }
 
-void sdu_ram_write(uint32_t addr, uint32_t wd){
+void sdu_ram_write(uint32_t addr, uint32_t wd) {
   nuData data;
   data.word = wd;
   SDU_RAM[addr] = data.byte[0];
@@ -446,7 +380,7 @@ void sdu_ram_write(uint32_t addr, uint32_t wd){
   SDU_RAM[addr+3] = data.byte[3];
 }
 
-uint32_t sdu_ram_read(uint32_t addr){
+uint32_t sdu_ram_read(uint32_t addr) {
   nuData data;
   data.byte[0] = SDU_RAM[addr];
   data.byte[1] = SDU_RAM[addr+1];
@@ -456,7 +390,7 @@ uint32_t sdu_ram_read(uint32_t addr){
 }
 
 void boot_lambda(int cp,int step) {
-  if(step == 0) {
+  if (step == 0) {
     // Stop the processor if it's running
     pS[cp].cpu_die_rq = 1;
     // Clobber PMR
@@ -466,7 +400,7 @@ void boot_lambda(int cp,int step) {
     bzero(pS[cp].WCS, 16384 * sizeof(uint64_t));
     // Initialize WCS map
     int i;
-    for(i=0; i<4096; i++){
+    for(i=0; i<4096; i++) {
       pS[cp].CRAM_map[i] = i;
     }
     // Enable bits in CONREG
@@ -487,7 +421,7 @@ void boot_lambda(int cp,int step) {
     pS[cp].pdl_index_reg = 0x7FF;
   }
   // Later steps are vestigial
-  if(step == 2) {
+  if (step == 2) {
     /* *********  Patches to Microcode go here ********* */
     trace_log("Patching loaded microcode...\n");
     // Fix to XGCD1+2 - Add1 to Rotate Field Sub1 from Length
@@ -495,11 +429,11 @@ void boot_lambda(int cp,int step) {
     // All done, continue
     trace_log("Starting loaded microcode...\n");
     // Write conf pointer to Qreg
-    if(cp == 0) {
+    if (cp == 0) {
       // Points to proc conf
       pS[cp].Qregister = 0xFF000000+proc0_conf_base;
     }
-    if(cp == 1) {
+    if (cp == 1) {
       // Points to proc conf
       pS[cp].Qregister = 0xFF000000+proc1_conf_base;
     }
@@ -517,11 +451,11 @@ void boot_lambda(int cp,int step) {
 }
 
 // i8259 PIC
-void pic_write(int pic, int adr, uint8_t data){
-  switch(adr){
+void pic_write(int pic, int adr, uint8_t data) {
+  switch(adr) {
   case 0: // COMMAND
     // What did we get?
-    if(data&0x10){
+    if (data&0x10) {
       // ICW1
       PIC[pic].State = 1;
       // The edge sense circuit is reset, meaning that all pending and
@@ -533,24 +467,24 @@ void pic_write(int pic, int adr, uint8_t data){
       // Slave Mode Address is set to 7
       // Special Mask Mode is cleared and Status Read is set to IRR
       // If IC4 = 0, everything in ICW4 is zeroed.
-      trace_log1u("SDU: PIC %d ICW1 [ ", pic);
-      if(data&0x01) {
+      trace_log_1u("SDU: PIC %d ICW1 [ ", pic);
+      if (data&0x01) {
 	PIC[pic].ICW4 = 1;
 	trace_log("ICW4 ");
       } else {
 	PIC[pic].ICW4 = 0;
       }
-      if(data&0x02) {
+      if (data&0x02) {
 	trace_log("SINGLE ");
       } else {
 	trace_log("CASCADE ");
       }
-      if(data&0x04) {
+      if (data&0x04) {
 	trace_log("ADI4 ");
       } else {
 	trace_log("ADI8 ");
       }
-      if(data&0x08) {
+      if (data&0x08) {
 	trace_log("LEVEL ");
       } else {
 	trace_log("EDGE ");
@@ -558,20 +492,20 @@ void pic_write(int pic, int adr, uint8_t data){
       trace_log("]\n");
       break;
     } else {
-      switch(PIC[pic].State){
+      switch(PIC[pic].State) {
       case 4: // OCW2/3
-	switch(data&0x18){
+	switch(data&0x18) {
 	case 0x00: // OCW2
 	  {
 	    uint8_t ir = data&0x07;
 	    uint8_t op = data&0xe0;
 	    int x = 0x01,y = 0;
-	    switch(op){
+	    switch(op) {
 	      // NON-SPECIFIC EOI
 	    case 0x20:
 	      // Dismiss highest priority request
 	      while(x < 0x100) {
-		if((PIC[pic].ISR&x) != 0) {
+		if ((PIC[pic].ISR&x) != 0) {
 		  PIC[pic].ISR &= ~x;
 		  PIC[pic].IRR &= ~x;
 		  PIC[pic].IRQ &= ~x;
@@ -589,7 +523,7 @@ void pic_write(int pic, int adr, uint8_t data){
 	    case 0xC0: // SET PRIORITY CMD
 	    case 0x40: // NO-OP
 	    default:
-	      trace_log2u("UNKNOWN PIC OCW2 OP 0x%X IR %X\n", op, ir);
+	      trace_log_2u("UNKNOWN PIC OCW2 OP 0x%X IR %X\n", op, ir);
 	      ld_die_rq = 1;
 	    }
 	  }
@@ -598,13 +532,13 @@ void pic_write(int pic, int adr, uint8_t data){
 	case 0x08:
 	  {
 	    uint8_t rdr = data&0x03;
-	    if(rdr == 1 || rdr == 3){
+	    if (rdr == 1 || rdr == 3) {
 	      PIC[pic].ReadReg = rdr;
 	    }
 	  }
 	  break;
 	default:
-	  trace_log3u("SDU: PIC %d CMD WRITE 0x%X WSEL 0x%X\n",
+	  trace_log_3u("SDU: PIC %d CMD WRITE 0x%X WSEL 0x%X\n",
 		 pic,
 		 data,
 		 (data&0x18));
@@ -612,7 +546,7 @@ void pic_write(int pic, int adr, uint8_t data){
 	}
 	break;
       default:
-	trace_log3u("SDU: PIC %d CMD WRITE 0x%X STATE %d\n",
+	trace_log_3u("SDU: PIC %d CMD WRITE 0x%X STATE %d\n",
 		  pic,
 		  data,
 		  PIC[pic].State);
@@ -621,9 +555,9 @@ void pic_write(int pic, int adr, uint8_t data){
     }
     break;
   case 1: // DATA
-    switch(PIC[pic].State){
+    switch(PIC[pic].State) {
     case 1: // ICW2
-      trace_log2u("SDU: PIC %d ICW2: Vec 0x%X\n", pic, (data&0xF8));
+      trace_log_2u("SDU: PIC %d ICW2: Vec 0x%X\n", pic, (data&0xF8));
       PIC[pic].Base = data&0xF8;
       PIC[pic].State++;
       break;
@@ -631,35 +565,35 @@ void pic_write(int pic, int adr, uint8_t data){
       // Initialize not-slave mask register
       PIC[pic].NSMR = 0xFF;
       // Process ICW3
-      if(pic > 0){
+      if (pic > 0) {
 	// Slave
-        trace_log2u("SDU: PIC %d SLAVE ICW3: Slave ID 0x%X\n", pic, data);
+        trace_log_2u("SDU: PIC %d SLAVE ICW3: Slave ID 0x%X\n", pic, data);
         PIC[pic].State++;
       }else{
 	// Master
-	trace_log2u("SDU: PIC %d MASTER ICW3: Slave Mask 0x%X\n", pic, data);
+	trace_log_2u("SDU: PIC %d MASTER ICW3: Slave Mask 0x%X\n", pic, data);
 	// If we are in SFNM, we need to mask this out of the NSMR!
-	if(PIC[pic].SFNM == 1){
+	if (PIC[pic].SFNM == 1) {
 	  PIC[pic].NSMR ^= data;
 	}
 	PIC[pic].State++;
       }
-      if(PIC[pic].ICW4 == 0){
+      if (PIC[pic].ICW4 == 0) {
 	// Skip ICW4
 	PIC[pic].ReadReg = 1;
 	PIC[pic].State++;
       }
       break;
     case 3: // ICW4
-      trace_log1u("SDU: PIC %d ICW4 [", pic);
-      if(data&0x01){ trace_log(" 8088"); }else{ trace_log(" MCS"); }
-      if(data&0x02){ trace_log(" AUTO"); }else{ trace_log(" NORM"); }
-      if(data&0x08){ trace_log(" BUF-");
-	if(data&0x04){ trace_log("MASTER"); }else{ trace_log("SLAVE"); }
+      trace_log_1u("SDU: PIC %d ICW4 [", pic);
+      if (data&0x01) { trace_log(" 8088"); }else{ trace_log(" MCS"); }
+      if (data&0x02) { trace_log(" AUTO"); }else{ trace_log(" NORM"); }
+      if (data&0x08) { trace_log(" BUF-");
+	if (data&0x04) { trace_log("MASTER"); }else{ trace_log("SLAVE"); }
       }else{
 	trace_log(" NONBUF");
       }
-      if(data&0x010){
+      if (data&0x010) {
 	// SPECIAL FULLY NESTED MODE
 	trace_log(" SFNM");
 	PIC[pic].SFNM = 1;
@@ -671,11 +605,11 @@ void pic_write(int pic, int adr, uint8_t data){
       PIC[pic].State++;
       break;
     case 4: // OCW1
-      trace_log2u("SDU: PIC %d OCW1: IMR = 0x%X\n", pic, data);
+      trace_log_2u("SDU: PIC %d OCW1: IMR = 0x%X\n", pic, data);
       PIC[pic].IMR = data;
       break;
     default:
-      trace_log3u("SDU: PIC %d DATA WRITE 0x%X STATE %d\n",
+      trace_log_3u("SDU: PIC %d DATA WRITE 0x%X STATE %d\n",
 		  pic,
 		  data,
 		  PIC[pic].State);
@@ -685,12 +619,12 @@ void pic_write(int pic, int adr, uint8_t data){
   }
 }
 
-uint8_t pic_read(int pic,int adr){
-  switch(adr){
+uint8_t pic_read(int pic,int adr) {
+  switch(adr) {
   case 0: // COMMAND
-    switch(PIC[pic].ReadReg){
+    switch(PIC[pic].ReadReg) {
     case 1: // IRR
-      /* if(pic == 2){
+      /* if (pic == 2) {
 	trace_log("SDU: PIC ");
 	writeDec(pic);
 	trace_log(" IRR READ = 0x");
@@ -703,7 +637,7 @@ uint8_t pic_read(int pic,int adr){
       return(PIC[pic].ISR);
       break;
     default:
-      trace_log2u("SDU: PIC %d REG %d READ\n",
+      trace_log_2u("SDU: PIC %d REG %d READ\n",
 		pic,
 		PIC[pic].ReadReg);
       ld_die_rq = 1;
@@ -712,7 +646,7 @@ uint8_t pic_read(int pic,int adr){
     break;
   case 1: // DATA
     // IMR
-    /* if(pic == 2){
+    /* if (pic == 2) {
       trace_log("SDU: PIC ");
       writeDec(pic);
       trace_log(" IMR READ = 0x");
@@ -734,14 +668,14 @@ uint16_t evaluate_pic(int pic) {
   // Evaluate the state of a PIC
   uint16_t status = 0;
   uint8_t intr = 0;
-  if(PIC[pic].State == 4){
+  if (PIC[pic].State == 4) {
     int x = 0x01;
     int y = 0;
     // Perform edge detection
-    while(x < 0x100){
+    while(x < 0x100) {
       // Edge detected?
-      if((PIC[pic].IRQ&x) == x){
-	if((PIC[pic].Last_IRQ&x) == 0){
+      if ((PIC[pic].IRQ&x) == x) {
+	if ((PIC[pic].Last_IRQ&x) == 0) {
 	  intr = 1;
 	  PIC[pic].Last_IRQ |= x;
 	  break;
@@ -756,19 +690,19 @@ uint16_t evaluate_pic(int pic) {
     // Update IRR
     PIC[pic].IRR = PIC[pic].IRQ;
     // If we found a new int, handle it.
-    if(intr != 0) {
+    if (intr != 0) {
       x = 0x01;
       y = 0;
       // Check from high to low, 0 = highest
-      while(x < 0x100){
+      while(x < 0x100) {
 	// If we're busy at this level, we have nothing more to do.
-	if((PIC[pic].ISR&x) != 0) {
+	if ((PIC[pic].ISR&x) != 0) {
 	  return(status);
 	}
 	// Otherwise: if we have a request that's 1) not masked off,
 	// and 2) not already in service. Then here is our output: go
 	// tell someone. Else loop.
-	if((PIC[pic].IRR & x) != 0
+	if ((PIC[pic].IRR & x) != 0
 	   && (PIC[pic].IMR & x) == 0
 	   && (PIC[pic].ISR & x) == 0) {
 	  status = 0x8000 | y;
@@ -792,33 +726,33 @@ uint16_t pic_chk() {
   // states to generate PIC0 request lines
   pic_status[1] = evaluate_pic(1);
   pic_status[2] = evaluate_pic(2);
-  if(pic_status[1]&0x8000 ||
+  if (pic_status[1]&0x8000 ||
      PIC[1].ISR != 0) {
     PIC[0].IRQ |= 0x80;
   } else {
     PIC[0].IRQ &= 0x7F;
   }
-  if(pic_status[2]&0x8000 || PIC[2].ISR != 0){
+  if (pic_status[2]&0x8000 || PIC[2].ISR != 0) {
     PIC[0].IRQ |= 0x40;
   } else {
     PIC[0].IRQ &= 0xBF;
   }
   // Now evaluate master state
   pic_status[0] = evaluate_pic(0);
-  if((pic_status[0] & 0x8000) == 0 &&
+  if ((pic_status[0] & 0x8000) == 0 &&
      PIC[0].SFNM == 1) {
     // If SFNM, we can take additional slave interrupts even if the
     // slave line is still busy Allow PIC 2 on IRQ 6 to clobber 7 if
     // they are both active
-    if(pic_status[1]&0x8000) {
+    if (pic_status[1]&0x8000) {
       pic_status[0] = 0x8007;
     }
-    if(pic_status[2] & 0x8000) {
+    if (pic_status[2] & 0x8000) {
       pic_status[0] = 0x8006;
     }
   }
   // If PIC0 returned an interrupt...
-  if(pic_status[0] & 0x8000){
+  if (pic_status[0] & 0x8000) {
     // Who did it?
     int irq = pic_status[0] & 0x0F;
     int subirq = -1;
@@ -826,9 +760,9 @@ uint16_t pic_chk() {
     // Light the ISR bit in PIC0
     PIC[0].ISR |= (0x01<<irq);
     // Was it a slave?
-    switch(irq){
+    switch(irq) {
     case 6: // PIC-2
-      if(pic_status[2]&0x8000){
+      if (pic_status[2]&0x8000) {
 	// Take info
 	subirq = pic_status[2]&0x0F;
 	base = PIC[2].Base;
@@ -837,7 +771,7 @@ uint16_t pic_chk() {
       }
       break;
     case 7: // PIC-1
-      if(pic_status[1]&0x8000){
+      if (pic_status[1]&0x8000) {
 	// Take info
 	subirq = pic_status[1]&0x0F;
 	base = PIC[1].Base;
@@ -847,7 +781,7 @@ uint16_t pic_chk() {
       break;
     }
     // ISR bits and IRQ info should be all set!
-    if((irq == 6 || irq == 7) && subirq > -1){
+    if ((irq == 6 || irq == 7) && subirq > -1) {
       irq = subirq;
     }
     status = 0x8000 | (base+irq);
@@ -857,25 +791,25 @@ uint16_t pic_chk() {
 }
 
 
-uint16_t pic_chk_old(){
+uint16_t pic_chk_old() {
   uint16_t status = 0;
   uint16_t pic_status[3] = { 0,0,0 };
   // Check for interrupt needing service
   // First, evaluate slave states to generate PIC0 request lines
   pic_status[1] = evaluate_pic(1);
   pic_status[2] = evaluate_pic(2);
-  if(pic_status[1]&0x8000 || PIC[1].ISR != 0){ PIC[0].IRQ |= 0x80; }else{ PIC[0].IRQ &= 0x7F; }
-  if(pic_status[2]&0x8000 || PIC[2].ISR != 0){ PIC[0].IRQ |= 0x40; }else{ PIC[0].IRQ &= 0xBF; }
+  if (pic_status[1]&0x8000 || PIC[1].ISR != 0) { PIC[0].IRQ |= 0x80; }else{ PIC[0].IRQ &= 0x7F; }
+  if (pic_status[2]&0x8000 || PIC[2].ISR != 0) { PIC[0].IRQ |= 0x40; }else{ PIC[0].IRQ &= 0xBF; }
   // Now evaluate master state
   pic_status[0] = evaluate_pic(0);
-  if((pic_status[0]&0x8000) == 0 && PIC[0].SFNM == 1){
+  if ((pic_status[0]&0x8000) == 0 && PIC[0].SFNM == 1) {
     // If SFNM, we can take additional slave interrupts even if the slave line is still busy
     // Allow PIC 2 on IRQ 6 to clobber 7 if they are both active
-    if(pic_status[1]&0x8000){ pic_status[0] = 0x8007; }
-    if(pic_status[2]&0x8000){ pic_status[0] = 0x8006; }
+    if (pic_status[1]&0x8000) { pic_status[0] = 0x8007; }
+    if (pic_status[2]&0x8000) { pic_status[0] = 0x8006; }
   }
   /*
-  if(pic_status[0] != 0 || pic_status[1] != 0 || pic_status[2] != 0){
+  if (pic_status[0] != 0 || pic_status[1] != 0 || pic_status[2] != 0) {
     trace_log("PIC IRRs: 0x");
     writeH8(PIC[0].IRR); trace_log(" ");
     writeH8(PIC[1].IRR); trace_log(" ");
@@ -891,7 +825,7 @@ uint16_t pic_chk_old(){
   }
   */
   // If PIC0 returned an interrupt...
-  if(pic_status[0]&0x8000){
+  if (pic_status[0]&0x8000) {
     // Who did it?
     int irq = pic_status[0]&0x0F;
     int subirq = -1;
@@ -899,9 +833,9 @@ uint16_t pic_chk_old(){
     // Light the ISR bit in PIC0
     PIC[0].ISR |= (0x01<<irq);
     // Was it a slave?
-    switch(irq){
+    switch(irq) {
     case 6: // PIC-2
-      if(pic_status[2]&0x8000){
+      if (pic_status[2]&0x8000) {
 	// Take info
 	subirq = pic_status[2]&0x0F;
 	base = PIC[2].Base;
@@ -910,7 +844,7 @@ uint16_t pic_chk_old(){
       }
       break;
     case 7: // PIC-1
-      if(pic_status[1]&0x8000){
+      if (pic_status[1]&0x8000) {
 	// Take info
 	subirq = pic_status[1]&0x0F;
 	base = PIC[1].Base;
@@ -923,7 +857,7 @@ uint16_t pic_chk_old(){
     /*
     trace_log("PIC 0: Servicing irq ");
     writeDec(irq);
-    if((irq == 6 || irq == 7) && subirq > -1){
+    if ((irq == 6 || irq == 7) && subirq > -1) {
       trace_log(" subirq ");
       writeDec(subirq);
     }
@@ -931,7 +865,7 @@ uint16_t pic_chk_old(){
     writeH8(base+irq);
     trace_log("\n");
     */
-    if((irq == 6 || irq == 7) && subirq > -1){
+    if ((irq == 6 || irq == 7) && subirq > -1) {
       irq = subirq;
     }
     status = 0x8000|(base+irq);
@@ -941,10 +875,10 @@ uint16_t pic_chk_old(){
 }
 
 // 8253 PIT
-uint8_t pit_read(int pit,int adr){
-  switch(adr){
+uint8_t pit_read(int pit,int adr) {
+  switch(adr) {
   default:
-    trace_log2u("SDU: PIT %d REG %d READ\n",
+    trace_log_2u("SDU: PIT %d REG %d READ\n",
 	      pit,
 	      adr);
     ld_die_rq = 1;
@@ -957,33 +891,33 @@ uint8_t pit_read(int pit,int adr){
 // PIT_RATE is nominally 1.2288 MHz
 #define PIT_RATE (1.2288/5)
 
-void pit_clockpulse(){
+void pit_clockpulse() {
   int x = 0;
-  while(x < 2){
+  while(x < 2) {
     int y = 0;
-    while(y < 3){
-      if(PIT[x].State[y] == 1){
+    while(y < 3) {
+      if (PIT[x].State[y] == 1) {
 	// Track ticks in state
-	if(PIT[x].Output_Ticks[y] < 5){ PIT[x].Output_Ticks[y]++; }
+	if (PIT[x].Output_Ticks[y] < 5) { PIT[x].Output_Ticks[y]++; }
 	// Clock running
-	switch(PIT[x].Mode[y]){
+	switch(PIT[x].Mode[y]) {
 	case 2: // Rate Generator
 	  PIT[x].RCounter[y] -= PIT_RATE;
-	  if(PIT[x].RCounter[y] <= 0){ PIT[x].Counter[y] = 0; }else{ PIT[x].Counter[y] = PIT[x].RCounter[y]; }
-	  if(PIT[x].Counter[y] == 0){
+	  if (PIT[x].RCounter[y] <= 0) { PIT[x].Counter[y] = 0; }else{ PIT[x].Counter[y] = PIT[x].RCounter[y]; }
+	  if (PIT[x].Counter[y] == 0) {
 	    PIT[x].Output[y] = 1;
 	    // Interrupt
-	    if(x == 1){
+	    if (x == 1) {
 	      uint8_t IRQ = 0x10;
 	      IRQ <<= y;
-	      if((PIC[1].IRQ&IRQ) == 0){
+	      if ((PIC[1].IRQ&IRQ) == 0) {
 		PIC[1].IRQ |= IRQ;
 		PIT[x].Output_Ticks[y] = 0;
 	      }else{
-		trace_log1u("PIT: CTR %d FIRED WHILE IRQ ALREADY SET\n", y);
+		trace_log_1u("PIT: CTR %d FIRED WHILE IRQ ALREADY SET\n", y);
 	      }
 	      /*
-	      if(x == 1 && y == 2){
+	      if (x == 1 && y == 2) {
 		extern uint8_t dotrace;
 		trace_log("PIT: DEBUG TRIGGER FIRED\n");
 		dotrace = 1;
@@ -995,13 +929,13 @@ void pit_clockpulse(){
 	  }else{
 	    PIT[x].Output[y] = 0;
 	    // Don't Interrupt
-	    if(x == 1){
+	    if (x == 1) {
 	      uint8_t IRQ = 0x10;
 	      IRQ <<= y;
-	      if((PIC[1].IRQ&IRQ) == IRQ && PIT[x].Output_Ticks[y] > 4){
+	      if ((PIC[1].IRQ&IRQ) == IRQ && PIT[x].Output_Ticks[y] > 4) {
 		PIC[1].IRQ ^= IRQ;
 		/*
-		if(x == 1 && y == 2){
+		if (x == 1 && y == 2) {
 		  // extern uint8_t dotrace;
 		  trace_log("PIT: DEBUG TRIGGER UN-FIRED\n");
 		  // dotrace = 1;
@@ -1016,11 +950,11 @@ void pit_clockpulse(){
 	  // Accumulate real time
 	  PIT[x].RCounter[y] += PIT_RATE;
 	  // If we have enough for a pulse
-	  while(PIT[x].RCounter[y] > 1){
+	  while(PIT[x].RCounter[y] > 1) {
 	    // Decrement counter at twice the normal rate.
 	    // See the datasheet for how/why.
-	    if(PIT[x].Counter[y]&0x01){
-	      if(PIT[x].Output[y] == 1){
+	    if (PIT[x].Counter[y]&0x01) {
+	      if (PIT[x].Output[y] == 1) {
 		PIT[x].Output[y]--;
 	      }else{
 		PIT[x].Output[y] -= 3;
@@ -1029,7 +963,7 @@ void pit_clockpulse(){
 	      PIT[x].Counter[y] -= 2;
 	    }
 	    // When count runs out
-	    if(PIT[x].Counter[y] == 0){
+	    if (PIT[x].Counter[y] == 0) {
 	      // Toggle output
 	      PIT[x].Output[y] ^= 1;
 	      // Reload
@@ -1039,21 +973,21 @@ void pit_clockpulse(){
 	    PIT[x].RCounter[y] -= 1;
 	  }
 	  // Set/Unset IRQ
-	  if(PIT[x].Output[y] == 1){
+	  if (PIT[x].Output[y] == 1) {
             // Interrupt
-            if(x == 1){
+            if (x == 1) {
               uint8_t IRQ = 0x10;
               IRQ <<= y;
-              if((PIC[1].IRQ&IRQ) == 0){
+              if ((PIC[1].IRQ&IRQ) == 0) {
                 PIC[1].IRQ |= IRQ;
               }
             }
           }else{
             // Don't Interrupt
-            if(x == 1){
+            if (x == 1) {
               uint8_t IRQ = 0x10;
               IRQ <<= y;
-              if((PIC[1].IRQ&IRQ) == IRQ){
+              if ((PIC[1].IRQ&IRQ) == IRQ) {
                 PIC[1].IRQ ^= IRQ;
               }
             }
@@ -1061,7 +995,7 @@ void pit_clockpulse(){
           break;
 
 	default:
-	  trace_log1u("pit_clockpulse(): Unknown mode %d\n", PIT[x].Mode[y]);
+	  trace_log_1u("pit_clockpulse(): Unknown mode %d\n", PIT[x].Mode[y]);
 	  ld_die_rq = 1;
 	}
       }
@@ -1071,20 +1005,20 @@ void pit_clockpulse(){
   }
 }
 
-void pit_write(int pit, int adr, uint8_t data){
-  switch(adr){
+void pit_write(int pit, int adr, uint8_t data) {
+  switch(adr) {
   case 0: // COUNTER 0
   case 1: // COUNTER 1
   case 2: // COUNTER 2
-    trace_log3u("SDU: PIT #%d Counter %d Reg = 0x%X\n",
+    trace_log_3u("SDU: PIT #%d Counter %d Reg = 0x%X\n",
 	      pit,
 	      adr,
 	      data);
-    if(PIT[pit].LoadHW[adr] == 0){
+    if (PIT[pit].LoadHW[adr] == 0) {
       // Load low bits then optionally hi bits
       PIT[pit].Counter[adr] &= 0xFF00;
       PIT[pit].Counter[adr] |= data;
-      if(PIT[pit].Format[adr] == 3){
+      if (PIT[pit].Format[adr] == 3) {
 	PIT[pit].LoadHW[adr]++;
       }else{
 	PIT[pit].RCounter[adr] = PIT[pit].Counter[adr];
@@ -1093,11 +1027,11 @@ void pit_write(int pit, int adr, uint8_t data){
       }
       break;
     }
-    if(PIT[pit].LoadHW[adr] == 1){
+    if (PIT[pit].LoadHW[adr] == 1) {
       // Load hi bits
       PIT[pit].Counter[adr] &= 0x00FF;
       PIT[pit].Counter[adr] |= (data<<8);
-      if(PIT[pit].Format[adr] == 3){
+      if (PIT[pit].Format[adr] == 3) {
 	PIT[pit].LoadHW[adr] = 0;
       }
       PIT[pit].RCounter[adr] = PIT[pit].Counter[adr];
@@ -1112,7 +1046,7 @@ void pit_write(int pit, int adr, uint8_t data){
       uint8_t ctr = ((data&0xC0)>>6);
       uint8_t fmt = ((data&0x30)>>4);
       uint8_t mod = ((data&0x0E)>>1);
-      trace_log4u("SDU: PIT #%d MODE: CTR %d FMT %d MODE %d\n",
+      trace_log_4u("SDU: PIT #%d MODE: CTR %d FMT %d MODE %d\n",
 		pit,
 		ctr,
 		fmt,
@@ -1122,7 +1056,7 @@ void pit_write(int pit, int adr, uint8_t data){
       PIT[pit].Mode[ctr] = mod;
       PIT[pit].Control[ctr] = (data&0x3F);
       PIT[pit].State[ctr] = 0; // Load
-      switch(fmt){
+      switch(fmt) {
       case 0: // LATCH
 	trace_log("LATCH NI\n"); ld_die_rq=1; break;
       case 1: // LOW
@@ -1135,7 +1069,7 @@ void pit_write(int pit, int adr, uint8_t data){
     break;
 
   default:
-    trace_log2u("SDU: PIT %d REG %d WRITE\n",
+    trace_log_2u("SDU: PIT %d REG %d WRITE\n",
 	      pit,
 	      adr);
     ld_die_rq = 1;
@@ -1154,37 +1088,37 @@ void pit_write(int pit, int adr, uint8_t data){
 // 0x040000 - 0x0EFFFF = DYNAMICALLY ALLOCATED MAPPED AREA (MAPPED TO NUBUS!)
 // 0x0F0000 - 0x0FFFFF = SDU ROM
 
-void sducons_rx_int(){
+void sducons_rx_int() {
   trace_log("SDUCONS: RXINT\n");
-  // if(PIC[1].IMR&0x01){ PIC[1].IMR ^= 0x11; } // HACK HACK
+  // if (PIC[1].IMR&0x01) { PIC[1].IMR ^= 0x11; } // HACK HACK
   PIC[1].IRQ |= 0x01; // SERIO IN
 }
 
 // Peripherals use this. The 8088's 8-bit BIU cannot generate 16-bit bus cycles.
-uint16_t multibus_word_read(mbAddr addr){
+uint16_t multibus_word_read(mbAddr addr) {
   // HANDLE NUBUS MAP
-  if(MNA_MAP[addr.Page].Enable != 0){
+  if (MNA_MAP[addr.Page].Enable != 0) {
     nuAddr MNB_Addr;
     MNB_Addr.Page = MNA_MAP[addr.Page].NUbus_Page;
     MNB_Addr.Offset = addr.Offset;
-    if(MNB_Addr.Card != 0xFA && MNB_Addr.Card != 0xF9 &&
-       MNB_Addr.Card != 0xF8 && MNB_Addr.Card != 0xFC){
-      trace_log2u("MULTIBUS Word Addr 0x%X => NUBUS Addr 0x%X\n",
+    if (MNB_Addr.Card != 0xFA && MNB_Addr.Card != 0xF9 &&
+       MNB_Addr.Card != 0xF8 && MNB_Addr.Card != 0xFC) {
+      trace_log_2u("MULTIBUS Word Addr 0x%X => NUBUS Addr 0x%X\n",
 		addr.raw,
 		MNB_Addr.raw);
     }
     // Obtain bus if we don't already have it
-    while(NUbus_Busy != 0 && NUbus_master != 0xFF){
+    while(NUbus_Busy != 0 && NUbus_master != 0xFF) {
       nubus_cycle(1);
     }
     // Place request on bus, lighting the low bit to indicate halfword-ness
     nubus_io_request(VM_READ,0xFF,MNB_Addr.raw|1,0);
     // Await completion or error
-    while(NUbus_Busy != 0 && NUbus_error == 0 && NUbus_acknowledge == 0){
+    while(NUbus_Busy != 0 && NUbus_error == 0 && NUbus_acknowledge == 0) {
       nubus_cycle(1);
     }
     // What did we get?
-    if(NUbus_error != 0){
+    if (NUbus_error != 0) {
       // Light bus error reg
       nubus_timeout_reg = 0xFF;
       // Fire interrupt
@@ -1192,9 +1126,9 @@ uint16_t multibus_word_read(mbAddr addr){
     }else{
       nubus_timeout_reg = 0;
     }
-    if(NUbus_acknowledge != 0){
+    if (NUbus_acknowledge != 0) {
       // If this address wasn't on a halfword boundary this fails.
-      if(NUbus_Address.Byte == 1){
+      if (NUbus_Address.Byte == 1) {
 	return(NUbus_Data.hword[0]);
       }else{
 	return(NUbus_Data.hword[1]);
@@ -1203,13 +1137,13 @@ uint16_t multibus_word_read(mbAddr addr){
     return(0xFFFF);
   }
 
-  switch(addr.raw){
+  switch(addr.raw) {
   case 0x000000 ... 0x00FFFF: // SDU RAM
     return(*(uint16_t *)(SDU_RAM+addr.raw));
     break;
 
   default:
-    trace_log1u("multibus_word_read: Unknown addr 0x%X\n",
+    trace_log_1u("multibus_word_read: Unknown addr 0x%X\n",
 		addr.raw);
     ld_die_rq = 1;
     return(0xFFFF);
@@ -1217,30 +1151,30 @@ uint16_t multibus_word_read(mbAddr addr){
   }
 }
 
-uint8_t multibus_read(mbAddr addr){
+uint8_t multibus_read(mbAddr addr) {
   // HANDLE NUBUS MAP
-  if(MNA_MAP[addr.Page].Enable != 0){
+  if (MNA_MAP[addr.Page].Enable != 0) {
     nuAddr MNB_Addr;
     MNB_Addr.Page = MNA_MAP[addr.Page].NUbus_Page;
     MNB_Addr.Offset = addr.Offset;
-    if(MNB_Addr.Card != 0xFA && MNB_Addr.Card != 0xF9 &&
-       MNB_Addr.Card != 0xF8 && MNB_Addr.Card != 0xFC){
-      trace_log2u("MULTIBUS Addr 0x%X => NUBUS Addr 0x%X\n",
+    if (MNB_Addr.Card != 0xFA && MNB_Addr.Card != 0xF9 &&
+       MNB_Addr.Card != 0xF8 && MNB_Addr.Card != 0xFC) {
+      trace_log_2u("MULTIBUS Addr 0x%X => NUBUS Addr 0x%X\n",
 		  addr.raw,
 		  MNB_Addr.raw);
     }
     // Obtain bus if we don't already have it
-    while(NUbus_Busy != 0 && NUbus_master != 0xFF){
+    while(NUbus_Busy != 0 && NUbus_master != 0xFF) {
       nubus_cycle(1);
     }
     // Place request on bus
     nubus_io_request(VM_BYTE_READ,0xFF,MNB_Addr.raw,0);
     // Await completion or error
-    while(NUbus_Busy != 0 && NUbus_error == 0 && NUbus_acknowledge == 0){
+    while(NUbus_Busy != 0 && NUbus_error == 0 && NUbus_acknowledge == 0) {
       nubus_cycle(1);
     }
     // What did we get?
-    if(NUbus_error != 0){
+    if (NUbus_error != 0) {
       // Light bus error reg
       nubus_timeout_reg = 0xFF;
       // Fire interrupt
@@ -1248,13 +1182,13 @@ uint8_t multibus_read(mbAddr addr){
     }else{
       nubus_timeout_reg = 0;
     }
-    if(NUbus_acknowledge != 0){
+    if (NUbus_acknowledge != 0) {
       return(NUbus_Data.byte[NUbus_Address.Byte]);
     }
     return(0xFF);
   }
 
-  switch(addr.raw){
+  switch(addr.raw) {
   case 0x000000 ... 0x00FFFF: // SDU RAM
     return(SDU_RAM[addr.raw]);
     break;
@@ -1271,7 +1205,7 @@ uint8_t multibus_read(mbAddr addr){
       // Position 4 = 7
       uint8_t data = 0xF0;
       extern uint8_t sdu_rotary_switch;
-      switch(sdu_rotary_switch){
+      switch(sdu_rotary_switch) {
       case 0:
       default:
 	data |= 0x0F; break;
@@ -1291,7 +1225,7 @@ uint8_t multibus_read(mbAddr addr){
   case 0x1c088: // SDU CSR0
     {
       uint8_t data = 0x00;
-      trace_log1u("SDUCSR0 0x%X\n", data);
+      trace_log_1u("SDUCSR0 0x%X\n", data);
       return(data);
     }
     break;
@@ -1299,9 +1233,9 @@ uint8_t multibus_read(mbAddr addr){
   case 0x1c08c: // SDU CSR1
     {
       uint8_t data = 0;
-      if(sdu_multibus_enable != 0){ data |= 0x01; }
-      if(sdu_nubus_enable != 0){ data |= 0x02; }
-      trace_log1u("SDUCSR1 0x%X\n", data);
+      if (sdu_multibus_enable != 0) { data |= 0x01; }
+      if (sdu_nubus_enable != 0) { data |= 0x02; }
+      trace_log_1u("SDUCSR1 0x%X\n", data);
       return(data);
     }
     break;
@@ -1309,9 +1243,9 @@ uint8_t multibus_read(mbAddr addr){
   case 0x1c120: // RTC Data Register
     {
       uint8_t RTC_Data = 0;
-      switch(rtc_addr){
+      switch(rtc_addr) {
       case 0x00 ... 0x09:
-	if(RTC_REGA.Update_In_Progress == 0){
+	if (RTC_REGA.Update_In_Progress == 0) {
 	  RTC_Data = RTC_Counter[rtc_addr];
 	}else{
 	  RTC_Data = 0;
@@ -1347,19 +1281,19 @@ uint8_t multibus_read(mbAddr addr){
   case 0x1c150: // console serial data register
     {
       uint8_t data = 0;
-      if(sdu_rx_ptr > 0){
+      if (sdu_rx_ptr > 0) {
 	data = sdu_rx_buf[sdu_rx_bot];
 	sdu_rx_bot++;
-	if(sdu_rx_bot == sdu_rx_ptr){
+	if (sdu_rx_bot == sdu_rx_ptr) {
 	  sdu_rx_ptr = sdu_rx_bot = 0;
 	  PIC[1].IRQ &= ~0x01; // SERIO IN
 	}
       }
       trace_log("SDUCONS: IN ");
-      if(data >= 0x20 && data <= 0x7E){
-	trace_log1u("%c", data);
+      if (data >= 0x20 && data <= 0x7E) {
+	trace_log_1u("%c", data);
       }else{
-	trace_log1u("0x%X", data);
+	trace_log_1u("0x%X", data);
       }
       trace_log("\n");
       return(data);
@@ -1369,13 +1303,13 @@ uint8_t multibus_read(mbAddr addr){
   case 0x1c154: // console serial command register
     {
       uint8_t status = 0x81; // -DSR, TXRDY
-      if(sdu_conn_fd < 0){
+      if (sdu_conn_fd < 0) {
 	status ^= 0x80; // Clear -DSR
       }
-      if(sducons_tx_top == 0){
+      if (sducons_tx_top == 0) {
 	status |= 0x04; // TX EMPTY
       }
-      if(sdu_rx_ptr > 0){
+      if (sdu_rx_ptr > 0) {
 	status |= 0x02; // RX RDY
       }
       // trace_log("RXSTA 0x"); writeH8(status); trace_log("\n");
@@ -1452,7 +1386,7 @@ uint8_t multibus_read(mbAddr addr){
     {
       uint16_t enet_addr = (addr.raw&0xFFFF);
       uint8_t data = enet_read(enet_addr);
-      trace_log2u("SDU: 3COM READ: 0x%X = 0x%X\n", enet_addr, data);
+      trace_log_2u("SDU: 3COM READ: 0x%X = 0x%X\n", enet_addr, data);
       return(data);
     }
     break;
@@ -1462,7 +1396,7 @@ uint8_t multibus_read(mbAddr addr){
     // Throw a multibus timeout.
   case 0x2fe00: // Don't know what this is, newboot tries to read it
   case 0x2ff00: // Don't know what this is, newboot tries to read it
-    trace_log1u("multibus_read: timeout for addr 0x%X\n",
+    trace_log_1u("multibus_read: timeout for addr 0x%X\n",
 		addr.raw);
     PIC[0].IRQ |= 0x01;
     return(0xFF);
@@ -1476,39 +1410,39 @@ uint8_t multibus_read(mbAddr addr){
     break;
 
   default:
-    trace_log1u("multibus_read: Unknown addr 0x%X\n", addr.raw);
+    trace_log_1u("multibus_read: Unknown addr 0x%X\n", addr.raw);
     ld_die_rq = 1;
     return(0xFF);
   }
 }
 
 // Peripherals use this. The 8088's 8-bit BIU cannot generate 16-bit bus cycles.
-void multibus_word_write(mbAddr addr,uint16_t data){
+void multibus_word_write(mbAddr addr,uint16_t data) {
   // HANDLE NUBUS MAP
-  if(MNA_MAP[addr.Page].Enable != 0){
+  if (MNA_MAP[addr.Page].Enable != 0) {
     nuAddr MNB_Addr;
     uint32_t Word = data;
     MNB_Addr.Page = MNA_MAP[addr.Page].NUbus_Page;
     MNB_Addr.Offset = addr.Offset;
-    if(MNB_Addr.Card != 0xFA && MNB_Addr.Card != 0xF9 &&
-       MNB_Addr.Card != 0xF8 && MNB_Addr.Card != 0xFC){
-      trace_log2u("MULTIBUS Word Addr 0x%X => NUBUS Addr 0x%X\n",
+    if (MNB_Addr.Card != 0xFA && MNB_Addr.Card != 0xF9 &&
+       MNB_Addr.Card != 0xF8 && MNB_Addr.Card != 0xFC) {
+      trace_log_2u("MULTIBUS Word Addr 0x%X => NUBUS Addr 0x%X\n",
 		addr.raw,
 		MNB_Addr.raw);
     }
     // Obtain bus if we don't already have it
-    while(NUbus_Busy != 0 && NUbus_master != 0xFF){
+    while(NUbus_Busy != 0 && NUbus_master != 0xFF) {
       nubus_cycle(1);
     }
     // Place request on bus
     Word <<= (8*MNB_Addr.Byte); // This won't work if the address isn't on a halfword boundary
     nubus_io_request(VM_WRITE,0xFF,MNB_Addr.raw|1,Word);
     // Await completion or error
-    while(NUbus_Busy != 0 && NUbus_error == 0 && NUbus_acknowledge == 0){
+    while(NUbus_Busy != 0 && NUbus_error == 0 && NUbus_acknowledge == 0) {
       nubus_cycle(1);
     }
     // What did we get?
-    if(NUbus_error != 0){
+    if (NUbus_error != 0) {
       // Light bus error reg
       nubus_timeout_reg = 0xFF;
       // Fire interrupt
@@ -1519,35 +1453,35 @@ void multibus_word_write(mbAddr addr,uint16_t data){
     return;
   }
 
-  switch(addr.raw){
+  switch(addr.raw) {
   case 0x000000 ... 0x00FFFF: // SDU RAM
     *(uint16_t *)(SDU_RAM+addr.raw) = data;
     break;
 
   default:
-    trace_log1u("multibus_word_write: Unknown addr 0x%X\n", addr.raw);
+    trace_log_1u("multibus_word_write: Unknown addr 0x%X\n", addr.raw);
     ld_die_rq = 1;
   }
 }
 
-void multibus_write(mbAddr addr,uint8_t data){
+void multibus_write(mbAddr addr,uint8_t data) {
   // HANDLE NUBUS MAP
-  if(MNA_MAP[addr.Page].Enable != 0){
+  if (MNA_MAP[addr.Page].Enable != 0) {
     nuAddr MNB_Addr;
     uint32_t Word = data;
     extern volatile int NUbus_trace;
     MNB_Addr.Page = MNA_MAP[addr.Page].NUbus_Page;
     MNB_Addr.Offset = addr.Offset;
-    if(MNB_Addr.Card != 0xFA && MNB_Addr.Card != 0xF9 &&
-       MNB_Addr.Card != 0xF8 && MNB_Addr.Card != 0xFC){
-      trace_log2u("MULTIBUS Addr 0x%X => NUBUS Addr 0x%X\n",
+    if (MNB_Addr.Card != 0xFA && MNB_Addr.Card != 0xF9 &&
+       MNB_Addr.Card != 0xF8 && MNB_Addr.Card != 0xFC) {
+      trace_log_2u("MULTIBUS Addr 0x%X => NUBUS Addr 0x%X\n",
 		addr.raw,
 		MNB_Addr.raw);
     }
     // Obtain bus if we don't already have it
-    while(NUbus_Busy != 0 && NUbus_master != 0xFF){
-      if(NUbus_trace == 1){
-	trace_log1u("SDU: Awaiting NUBUS: %d\n",NUbus_Busy);
+    while(NUbus_Busy != 0 && NUbus_master != 0xFF) {
+      if (NUbus_trace == 1) {
+	trace_log_1u("SDU: Awaiting NUBUS: %d\n",NUbus_Busy);
       }
       nubus_cycle(1);
     }
@@ -1555,14 +1489,14 @@ void multibus_write(mbAddr addr,uint8_t data){
     Word <<= (8*MNB_Addr.Byte);
     nubus_io_request(VM_BYTE_WRITE,0xFF,MNB_Addr.raw,Word);
     // Await completion or error
-    while(NUbus_Busy != 0 && NUbus_error == 0 && NUbus_acknowledge == 0){
-      if(NUbus_trace == 1){
-	trace_log1u("SDU: Driving NUBUS cycle: %d\n",NUbus_Busy);
+    while(NUbus_Busy != 0 && NUbus_error == 0 && NUbus_acknowledge == 0) {
+      if (NUbus_trace == 1) {
+	trace_log_1u("SDU: Driving NUBUS cycle: %d\n",NUbus_Busy);
       }
       nubus_cycle(1);
     }
-    if(NUbus_trace == 1){
-      trace_log6u("NUBUS: SDU Cycle Complete: "
+    if (NUbus_trace == 1) {
+      trace_log_6u("NUBUS: SDU Cycle Complete: "
 		  "Request %o Addr 0x%X (0%o) w/ data 0x%X (0%o) Ack %o\n",
 		  NUbus_Request,
 		  NUbus_Address.raw,
@@ -1572,7 +1506,7 @@ void multibus_write(mbAddr addr,uint8_t data){
 		  NUbus_acknowledge);
     }
     // What did we get?
-    if(NUbus_error != 0){
+    if (NUbus_error != 0) {
       // Light bus error reg
       nubus_timeout_reg = 0xFF;
       // Fire interrupt
@@ -1583,7 +1517,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     return;
   }
 
-  switch(addr.raw){
+  switch(addr.raw) {
   case 0x000000 ... 0x00FFFF: // SDU RAM
     SDU_RAM[addr.raw] = data;
     break;
@@ -1592,51 +1526,51 @@ void multibus_write(mbAddr addr,uint8_t data){
     // LEDs are RUN, SET UP, and ATTN.
     // 0 = on, 1 = off
     // Bit 0 = RUN, 1 = SET UP, 2 = ATTN
-    trace_log1u("SDU: LIGHTS = 0x%X\n", data);
+    trace_log_1u("SDU: LIGHTS = 0x%X\n", data);
     break;
 
   case 0x1c088: // SDU CSR0
-    trace_log1u("SDU: WRITE CSR0 = 0x%X",data);
-    if(data&0x08){
+    trace_log_1u("SDU: WRITE CSR0 = 0x%X",data);
+    if (data&0x08) {
       // QIC tape reset
       trace_log(" QIC-RESET");
     }
-    if(data&0x04){
+    if (data&0x04) {
       // MULTIBUS RESET
       trace_log(" MB-RESET");
     }
-    if(data&0x02){
+    if (data&0x02) {
       // NUBUS RESET
       trace_log(" NB-RESET");
     }
-    if(data&0x01){
+    if (data&0x01) {
       // "X" RESET
       trace_log(" X-RESET");
     }
-    if(data&0xF0){ ld_die_rq = 1; } // QIC status/control bits
+    if (data&0xF0) { ld_die_rq = 1; } // QIC status/control bits
     trace_log("\n");
     break;
 
   case 0x1c08c: // SDU CSR1
-    if(data&0x01){ sdu_multibus_enable = 1; }else{ sdu_multibus_enable = 0; } // MULTIBUS ENABLE
-    if(data&0x02){ } // MULTIBUS->NUBUS CONVERTER ENABLE
-    if(data&0x04){ sdu_nubus_enable = 1; }else{ sdu_nubus_enable = 0; } // NUBUS ENABLE
-    if(data&0x08){ } // CLOCK SLOW
-    if(data&0x10){ } // CLOCK FAST
+    if (data&0x01) { sdu_multibus_enable = 1; }else{ sdu_multibus_enable = 0; } // MULTIBUS ENABLE
+    if (data&0x02) { } // MULTIBUS->NUBUS CONVERTER ENABLE
+    if (data&0x04) { sdu_nubus_enable = 1; }else{ sdu_nubus_enable = 0; } // NUBUS ENABLE
+    if (data&0x08) { } // CLOCK SLOW
+    if (data&0x10) { } // CLOCK FAST
     // CLOCK SLOW & CLOCK FAST CLEAR = CLOCK NORMAL
-    if(data&0x20){ } // VOLT HI
-    if(data&0x40){ } // VOLT LOW
+    if (data&0x20) { } // VOLT HI
+    if (data&0x40) { } // VOLT LOW
     // VOLT HI + VOLT LO = VOLT NORM
-    if(data&0x80){ ld_die_rq = 1; }
-    trace_log1u("SDU: WRITE CSR1 = 0x%X\n", data);
+    if (data&0x80) { ld_die_rq = 1; }
+    trace_log_1u("SDU: WRITE CSR1 = 0x%X\n", data);
     break;
 
   case 0x1c120: // RTC Data Register
     {
       // Process bits
-      switch(rtc_addr){
+      switch(rtc_addr) {
       case 0x00 ... 0x09:
-	if(RTC_REGA.Update_In_Progress == 0){
+	if (RTC_REGA.Update_In_Progress == 0) {
 	  RTC_Counter[rtc_addr] = data;
 	}
 	break;
@@ -1658,7 +1592,7 @@ void multibus_write(mbAddr addr,uint8_t data){
 	RTC_RAM[rtc_addr-0x0E] = data;
 	break;
       }
-      trace_log1u("RTC: Data Write, data 0x%X\n", data);
+      trace_log_1u("RTC: Data Write, data 0x%X\n", data);
     }
     break;
 
@@ -1671,17 +1605,17 @@ void multibus_write(mbAddr addr,uint8_t data){
       sducons_tx_buf[sducons_tx_top] = data;
       sducons_tx_top++;
       trace_log("SDUCONS: OUT ");
-      if(data >= 0x20 && data <= 0x7E){
-	trace_log1u("%c", data);
+      if (data >= 0x20 && data <= 0x7E) {
+	trace_log_1u("%c", data);
       }else{
-	trace_log1u("0x%X", data);
+	trace_log_1u("0x%X", data);
       }
       trace_log("\n");
     }
     break;
 
   case 0x1c154: // console serial command register
-    trace_log1u("SDU: Console Serial Command Reg = 0x%X\n", data);
+    trace_log_1u("SDU: Console Serial Command Reg = 0x%X\n", data);
     break;
 
   case 0x1c160: // PIT #1 Counter 0 register (Console Baud Rate Generator)
@@ -1705,7 +1639,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     break;
 
   case 0x1c180: // nubus timeout registeer
-    trace_log1u("SDU: NUBus Timeout Register = 0x%X\n", data);
+    trace_log_1u("SDU: NUBus Timeout Register = 0x%X\n", data);
     nubus_timeout_reg = data;
     break;
 
@@ -1729,7 +1663,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     break;
 
   case 0x1c1e0: // initiate multibus interrupt #0
-    if(data == 0){
+    if (data == 0) {
       clear_multibus_interrupt(0); // Drop IRQ
     }else{
       multibus_interrupt(0); // Set IRQ
@@ -1737,7 +1671,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     break;
 
   case 0x1c1e4: // initiate multibus interrupt #1
-    if(data == 0){
+    if (data == 0) {
       clear_multibus_interrupt(1);
     }else{
       multibus_interrupt(1);
@@ -1745,7 +1679,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     break;
 
   case 0x1c1e8: // initiate multibus interrupt #2
-    if(data == 0){
+    if (data == 0) {
       clear_multibus_interrupt(2);
     }else{
       multibus_interrupt(2);
@@ -1753,7 +1687,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     break;
 
   case 0x1c1ec: // initiate multibus interrupt #3
-    if(data == 0){
+    if (data == 0) {
       clear_multibus_interrupt(3);
     }else{
       multibus_interrupt(3);
@@ -1761,7 +1695,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     break;
 
   case 0x1c1f0: // initiate multibus interrupt #4
-    if(data == 0){
+    if (data == 0) {
       clear_multibus_interrupt(4);
     }else{
       multibus_interrupt(4);
@@ -1769,7 +1703,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     break;
 
   case 0x1c1f4: // initiate multibus interrupt #5
-    if(data == 0){
+    if (data == 0) {
       clear_multibus_interrupt(5);
     }else{
       multibus_interrupt(5);
@@ -1777,7 +1711,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     break;
 
   case 0x1c1f8: // initiate multibus interrupt #6
-    if(data == 0){
+    if (data == 0) {
       clear_multibus_interrupt(6);
     }else{
       multibus_interrupt(6);
@@ -1785,7 +1719,7 @@ void multibus_write(mbAddr addr,uint8_t data){
     break;
 
   case 0x1c1fc: // initiate multibus interrupt #7
-    if(data == 0){
+    if (data == 0) {
       clear_multibus_interrupt(7);
     }else{
       multibus_interrupt(7);
@@ -1810,7 +1744,7 @@ void multibus_write(mbAddr addr,uint8_t data){
   case 0x030000 ... 0x031FFF: // 3com Ethernet
     {
       uint16_t enet_addr = (addr.raw&0xFFFF);
-      trace_log2u("SDU: 3COM WRITE: 0x%X = 0x%X\n", enet_addr,data);
+      trace_log_2u("SDU: 3COM WRITE: 0x%X = 0x%X\n", enet_addr,data);
       enet_write(enet_addr,data);
     }
     break;
@@ -1818,37 +1752,37 @@ void multibus_write(mbAddr addr,uint8_t data){
   case 0x040000 ... 0x0EFFFF: // DYNAMICALLY ALLOCATED MAPPED AREA
     // This should have been caught above. The map must not have been set up.
     // Throw a multibus timeout.
-    trace_log1u("multibus_write: timeout for addr 0x%X\n",addr.raw);
+    trace_log_1u("multibus_write: timeout for addr 0x%X\n",addr.raw);
     PIC[0].IRQ |= 0x01;
     break;
 
   default:
-    trace_log1u("multibus_write: Unknown addr 0x%X\n",addr.raw);
+    trace_log_1u("multibus_write: Unknown addr 0x%X\n",addr.raw);
     ld_die_rq = 1;
   }
 }
 
-void multibus_interrupt(int irq){
+void multibus_interrupt(int irq) {
   uint8_t irbit = 0x01;
   irbit <<= irq;
   /*
-  if(PIC[2].IRQ & irbit){
+  if (PIC[2].IRQ & irbit) {
     trace_log("SDU: FIRE MULTIBUS INTERRUPT %d (ALREADY SET!)\n",irq);
   }
   */
   PIC[2].IRQ |= irbit;
   // PIC[2].Last_IRQ &= ~irbit; // Ensure edge detector fires
   /*
-  if(PIC[2].IMR & irbit){
+  if (PIC[2].IMR & irbit) {
     trace_log("SDU: FIRE MULTIBUS INTERRUPT %d (MASKED!)\n",irq);
   }
   */
 }
 
-void clear_multibus_interrupt(int irq){
+void clear_multibus_interrupt(int irq) {
   uint8_t irbit = 0x01;
   irbit <<= irq;
-  if(PIC[2].IRQ & irbit){
+  if (PIC[2].IRQ & irbit) {
     /*
     trace_log("SDU: CLEAR MULTIBUS INTERRUPT ");
     writeDec(irq);
@@ -1859,14 +1793,14 @@ void clear_multibus_interrupt(int irq){
     trace_log("SDU: CLEAR MULTIBUS INTERRUPT %d (ALREADY CLEAR!)\n",irq);
   } */
   // What about this?
-  if(PIC[2].Last_IRQ&irbit){
+  if (PIC[2].Last_IRQ&irbit) {
     PIC[2].Last_IRQ ^= irbit;
   }
 }
 
-uint8_t i8088_port_read(uint32_t addr){
+uint8_t i8088_port_read(uint32_t addr) {
   uint8_t data;
-  switch(addr){
+  switch(addr) {
 
   case 0x40: // INTERPHASE STATUS
     data = smd_read(0);
@@ -1890,15 +1824,15 @@ uint8_t i8088_port_read(uint32_t addr){
     break;
 
   default:
-    trace_log1u("i8088_port_read: Unknown addr 0x%X\n",addr);
+    trace_log_1u("i8088_port_read: Unknown addr 0x%X\n",addr);
     ld_die_rq = 1;
     PIC[0].IRQ |= 0x01; // MULTIBUS TIMEOUT
     return(0xFF);
   }
 }
 
-void i8088_port_write(uint32_t addr,uint8_t data){
-  switch(addr){
+void i8088_port_write(uint32_t addr,uint8_t data) {
+  switch(addr) {
   case 0x40: // SMD COMMAND
     smd_write(0,data);
     break;
@@ -1931,24 +1865,24 @@ void i8088_port_write(uint32_t addr,uint8_t data){
     break;
 
   default:
-    trace_log2u("i8088_port_write: Unknown addr 0x%X w/ data 0x%X\n",addr,data);
+    trace_log_2u("i8088_port_write: Unknown addr 0x%X w/ data 0x%X\n",addr,data);
     PIC[0].IRQ |= 0x01; // MULTIBUS TIMEOUT
     ld_die_rq = 1;
   }
 }
 
-void sdu_clock_pulse(){
+void sdu_clock_pulse() {
   // Step 8088 PITs
   // The SDU PIT clock is 1.2288 MHz
   pit_clockpulse();
   // Drive console (HACK HACK)
   // PIT doesn't work properly yet so this fakes the approximate rate.
   pit_cycle_counter++;
-  if(pit_cycle_counter == 520){
-    if(sducons_tx_top > 0){
+  if (pit_cycle_counter == 520) {
+    if (sducons_tx_top > 0) {
       sducons_write(sducons_tx_buf[sducons_tx_bot]);
       sducons_tx_bot++;
-      if(sducons_tx_bot == sducons_tx_top){
+      if (sducons_tx_bot == sducons_tx_top) {
 	sducons_tx_bot = sducons_tx_top = 0;
 	PIC[1].IRQ |= 0x02; // SERIO OUT INT
       }
@@ -1956,43 +1890,43 @@ void sdu_clock_pulse(){
     pit_cycle_counter = 0;
   }
   // RTC updation
-  if(RTC_REGB.Set == 0){
+  if (RTC_REGB.Set == 0) {
     // We are enabled
     rtc_cycle_count++;
     // Lambda has a 5MHz clock.
     // At 32 KHz, it takes 1984 microseconds to update the clock.
-    if(rtc_cycle_count >= 5000000){
+    if (rtc_cycle_count >= 5000000) {
       rtc_cycle_count = 0;
       RTC_REGA.Update_In_Progress = 1;
       RTC_Counter[RTC_SECONDS]++;
-      if(RTC_Counter[RTC_SECONDS] > 59){
+      if (RTC_Counter[RTC_SECONDS] > 59) {
 	RTC_Counter[RTC_SECONDS] = 0;
 	RTC_Counter[RTC_MINUTES]++;
-	if(RTC_Counter[RTC_MINUTES] > 59){
+	if (RTC_Counter[RTC_MINUTES] > 59) {
 	  uint8_t Inc_Day=0;
 	  RTC_Counter[RTC_MINUTES] = 0;
 	  RTC_Counter[RTC_HOURS]++;
-	  if(RTC_REGB.Format == 0){
-	    if(RTC_Counter[RTC_HOURS] > 13 && RTC_Counter[RTC_HOURS] < 0x81){
+	  if (RTC_REGB.Format == 0) {
+	    if (RTC_Counter[RTC_HOURS] > 13 && RTC_Counter[RTC_HOURS] < 0x81) {
 	      // Convert to PM
 	      RTC_Counter[RTC_HOURS] = 0x81;
 	    }
-	    if(RTC_Counter[RTC_HOURS] > 0x8C){
+	    if (RTC_Counter[RTC_HOURS] > 0x8C) {
 	      RTC_Counter[RTC_HOURS] = 1;
 	      Inc_Day = 1;
 	    }
 	  }else{
-	    if(RTC_Counter[RTC_HOURS] > 23){
+	    if (RTC_Counter[RTC_HOURS] > 23) {
 	      RTC_Counter[RTC_HOURS] = 0;
 	      Inc_Day = 1;
 	    }
 	  }
-	  if(Inc_Day == 1){
+	  if (Inc_Day == 1) {
 	    uint8_t Last_Day=0;;
 	    RTC_Counter[RTC_DAY_OF_WEEK]++;
 	    RTC_Counter[RTC_DATE_OF_MONTH]++;
-	    if(RTC_Counter[RTC_DAY_OF_WEEK] > 7){ RTC_Counter[RTC_DAY_OF_WEEK] = 1; }
-	    switch(RTC_Counter[RTC_MONTH]){
+	    if (RTC_Counter[RTC_DAY_OF_WEEK] > 7) { RTC_Counter[RTC_DAY_OF_WEEK] = 1; }
+	    switch(RTC_Counter[RTC_MONTH]) {
 	    case 1:
 	    case 3:
 	    case 5:
@@ -2002,13 +1936,13 @@ void sdu_clock_pulse(){
 	    case 12:
 	      Last_Day = 31; break;
 	    case 2:
-	      if(RTC_Counter[RTC_MONTH]%400 == 0){
+	      if (RTC_Counter[RTC_MONTH]%400 == 0) {
 		Last_Day = 29; break;
 	      }else{
-		if(RTC_Counter[RTC_MONTH]%100 == 0){
+		if (RTC_Counter[RTC_MONTH]%100 == 0) {
 		  Last_Day = 28; break;
 		}else{
-		  if(RTC_Counter[RTC_MONTH]%4 == 0){
+		  if (RTC_Counter[RTC_MONTH]%4 == 0) {
 		    Last_Day = 29; break;
 		  }else{
 		    Last_Day = 28; break;
@@ -2022,13 +1956,13 @@ void sdu_clock_pulse(){
 	    case 11:
 	      Last_Day = 30; break;
 	    }
-	    if(RTC_Counter[RTC_DATE_OF_MONTH] > Last_Day){
+	    if (RTC_Counter[RTC_DATE_OF_MONTH] > Last_Day) {
 	      RTC_Counter[RTC_DATE_OF_MONTH] = 1;
 	      RTC_Counter[RTC_MONTH]++;
-	      if(RTC_Counter[RTC_MONTH] > 12){
+	      if (RTC_Counter[RTC_MONTH] > 12) {
 		RTC_Counter[RTC_MONTH] = 1;
 		RTC_Counter[RTC_YEAR]++;
-		if(RTC_Counter[RTC_YEAR] > 99){
+		if (RTC_Counter[RTC_YEAR] > 99) {
 		  // TODO: CAUSE APOCALYPSE
 		  RTC_Counter[RTC_YEAR] = 0;
 		}
@@ -2039,16 +1973,16 @@ void sdu_clock_pulse(){
       }
       // TODO: ALARM INTERRUPT CHECK (if lisp uses it)
     }
-    if(RTC_REGA.Update_In_Progress != 0 && rtc_cycle_count > 9920){
+    if (RTC_REGA.Update_In_Progress != 0 && rtc_cycle_count > 9920) {
       RTC_REGA.Update_In_Progress = 0;
     }
   }
 
   // SDU nubus interface
   // If the bus is busy and not acknowledged...
-  if(NUbus_Busy == 2 && NUbus_acknowledge == 0){
+  if (NUbus_Busy == 2 && NUbus_acknowledge == 0) {
     // Is it us?
-    if(NUbus_Address.Card == 0xFF){
+    if (NUbus_Address.Card == 0xFF) {
       // Yes, answer.
 
       // THIS IS THE SDU ADDRESS SPACE LAYOUT (AS SEEN FROM THE NUBUS)
@@ -2062,13 +1996,13 @@ void sdu_clock_pulse(){
       // 0x040000 - 0x0EFFFF = DYNAMICALLY ALLOCATED MAPPED AREA (MAPPED TO NUBUS!)
       // 0x0F0000 - 0x0FFFFF = SDU ROM
 
-      switch(NUbus_Address.Addr){
+      switch(NUbus_Address.Addr) {
       case 0x000000 ... 0x00FFFF: // SDU RAM
 	{
 	  uint32_t MEM_Addr = NUbus_Address.Addr;
-	  if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
-	    if(NUbus_Request == VM_READ){ // Read four bytes
-	      switch(NUbus_Address.Byte){
+	  if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
+	    if (NUbus_Request == VM_READ) { // Read four bytes
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Read Low Half
 		NUbus_Data.byte[1] = SDU_RAM[MEM_Addr];
 		NUbus_Data.byte[0] = SDU_RAM[MEM_Addr-1];
@@ -2096,25 +2030,25 @@ void sdu_clock_pulse(){
 	      // BYTE READ
 	      NUbus_Data.byte[NUbus_Address.Byte] = SDU_RAM[MEM_Addr];
 	    }
-	    if(SDU_RAM_trace){
-	      trace_log3u("SDU: RAM Read: Request %o Addr 0x%X (0x%X",NUbus_Request,NUbus_Address.raw,MEM_Addr);
-	      if(MEM_Addr >= sysconf_base && MEM_Addr <= (sysconf_base+sizeof(system_configuration_qs))){
+	    if (SDU_RAM_trace) {
+	      trace_log_3u("SDU: RAM Read: Request %o Addr 0x%X (0x%X",NUbus_Request,NUbus_Address.raw,MEM_Addr);
+	      if (MEM_Addr >= sysconf_base && MEM_Addr <= (sysconf_base+sizeof(system_configuration_qs))) {
 		uint32_t Offset = (MEM_Addr-sysconf_base)/4;
-		trace_log1u(", sysconf %s",sysconf_q_names[Offset]);
+		trace_log_1s(", sysconf %s", sysconf_q_names[Offset]);
 	      }
-	      if(MEM_Addr >= proc0_conf_base && MEM_Addr <= (proc0_conf_base+sizeof(processor_configuration_qs))){
+	      if (MEM_Addr >= proc0_conf_base && MEM_Addr <= (proc0_conf_base+sizeof(processor_configuration_qs))) {
 		uint32_t Offset = (MEM_Addr-proc0_conf_base)/4;
-		trace_log1u(", proc0_conf %s",proc_conf_q_names[Offset]);
+		trace_log_1s(", proc0_conf %s", proc_conf_q_names[Offset]);
 	      }
-	      if(MEM_Addr >= proc1_conf_base && MEM_Addr <= (proc1_conf_base+sizeof(processor_configuration_qs))){
+	      if (MEM_Addr >= proc1_conf_base && MEM_Addr <= (proc1_conf_base+sizeof(processor_configuration_qs))) {
 		uint32_t Offset = (MEM_Addr-proc1_conf_base)/4;
-		trace_log1u(", proc1_conf %s",proc_conf_q_names[Offset]);
+		trace_log_1s(", proc1_conf %s", proc_conf_q_names[Offset]);
 	      }
 	      trace_log(")");
-	      if(NUbus_Data.word == 0){
+	      if (NUbus_Data.word == 0) {
 		trace_log(" returned zeroes");
 	      }else{
-		trace_log1u(" returned 0x%X",NUbus_Data.word);
+		trace_log_1u(" returned 0x%X",NUbus_Data.word);
 	      }
 	      trace_log("\n");
 	    }
@@ -2122,12 +2056,12 @@ void sdu_clock_pulse(){
 	    return;
 	  }
 	  // Write
-	  if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
-	    if(NUbus_Request == VM_BYTE_WRITE){
+	  if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
+	    if (NUbus_Request == VM_BYTE_WRITE) {
 	      SDU_RAM[MEM_Addr] = NUbus_Data.byte[NUbus_Address.Byte];               // Store data
 	    }else{
 	      // WORD WRITE
-	      switch(NUbus_Address.Byte){
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Write low half
 		SDU_RAM[MEM_Addr-1] = NUbus_Data.byte[0];
 		SDU_RAM[MEM_Addr] = NUbus_Data.byte[1];
@@ -2151,24 +2085,24 @@ void sdu_clock_pulse(){
 		break;
 	      }
 	    }
-	    if(SDU_RAM_trace){
-	      trace_log3u("SDU: RAM Write: Request %o Addr 0x%X (0x%X",
+	    if (SDU_RAM_trace) {
+	      trace_log_3u("SDU: RAM Write: Request %o Addr 0x%X (0x%X",
 			  NUbus_Request,
 			  NUbus_Address.raw,
 			  MEM_Addr);
-	      if(MEM_Addr >= sysconf_base && MEM_Addr <= (sysconf_base+sizeof(system_configuration_qs))){
+	      if (MEM_Addr >= sysconf_base && MEM_Addr <= (sysconf_base+sizeof(system_configuration_qs))) {
 		uint32_t Offset = (MEM_Addr-sysconf_base)/4;
-		trace_log1u(", sysconf %s",sysconf_q_names[Offset]);
+		trace_log_1s(", sysconf %s", sysconf_q_names[Offset]);
 	      }
-	      if(MEM_Addr >= proc0_conf_base && MEM_Addr <= (proc0_conf_base+sizeof(processor_configuration_qs))){
+	      if (MEM_Addr >= proc0_conf_base && MEM_Addr <= (proc0_conf_base+sizeof(processor_configuration_qs))) {
 		uint32_t Offset = (MEM_Addr-proc0_conf_base)/4;
-		trace_log1u(", proc0_conf %s",proc_conf_q_names[Offset]);
+		trace_log_1s(", proc0_conf %s", proc_conf_q_names[Offset]);
 	      }
-	      if(MEM_Addr >= proc1_conf_base && MEM_Addr <= (proc1_conf_base+sizeof(processor_configuration_qs))){
+	      if (MEM_Addr >= proc1_conf_base && MEM_Addr <= (proc1_conf_base+sizeof(processor_configuration_qs))) {
 		uint32_t Offset = (MEM_Addr-proc1_conf_base)/4;
-		trace_log1u(", proc1_conf %s",proc_conf_q_names[Offset]);
+		trace_log_1s(", proc1_conf %s", proc_conf_q_names[Offset]);
 	      }
-	      trace_log1u(") data 0x%X\n",NUbus_Data.word);
+	      trace_log_1u(") data 0x%X\n", NUbus_Data.word);
 	    }
 	    NUbus_acknowledge=1;
 	    return;
@@ -2179,9 +2113,9 @@ void sdu_clock_pulse(){
       case 0x0F0000 ... 0x0FFFFF: // SDU ROM
 	{
 	  uint32_t MEM_Addr = NUbus_Address.Addr-0x0F0000;
-	  if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
-	    if(NUbus_Request == VM_READ){ // Read four bytes
-	      switch(NUbus_Address.Byte){
+	  if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
+	    if (NUbus_Request == VM_READ) { // Read four bytes
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Read Low Half
 		NUbus_Data.byte[1] = SDU_ROM[MEM_Addr];
 		NUbus_Data.byte[0] = SDU_ROM[MEM_Addr-1];
@@ -2220,9 +2154,9 @@ void sdu_clock_pulse(){
 	{
 	  uint32_t CMOS_Addr = ((NUbus_Address.Addr-0x1E000)>>2);
 	  // Handle it
-	  if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
-	    if(NUbus_Request == VM_READ){ // Read four bytes
-	      switch(NUbus_Address.Byte){
+	  if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
+	    if (NUbus_Request == VM_READ) { // Read four bytes
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Read Low Half
 		NUbus_Data.byte[1] = 0;
 		NUbus_Data.byte[0] = CMOS_RAM[CMOS_Addr];
@@ -2250,7 +2184,7 @@ void sdu_clock_pulse(){
 	    NUbus_acknowledge=1;
 	    return;
 	  }
-	  if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
+	  if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
 	    ld_die_rq = 1;
 	  }
 	}
@@ -2267,9 +2201,9 @@ void sdu_clock_pulse(){
 		  each register maps a 1K byte segment to a 1K nubus page.
 	  */
 	  /* THEY ONLY WORK IF REFERENCED ON SINGLE BYTE TRANSFERS. (???) */
-	  if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
-	    if(NUbus_Request == VM_READ){ // Read four bytes
-	      switch(NUbus_Address.Byte){
+	  if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
+	    if (NUbus_Request == VM_READ) { // Read four bytes
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Read Low Half
 		NUbus_Data.byte[1] = MNA_MAP[MAP_Addr].byte[1];
 		NUbus_Data.byte[0] = MNA_MAP[MAP_Addr].byte[0];
@@ -2298,12 +2232,12 @@ void sdu_clock_pulse(){
 	    return;
 	  }
 	  // Write
-	  if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
-	    if(NUbus_Request == VM_BYTE_WRITE){
+	  if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
+	    if (NUbus_Request == VM_BYTE_WRITE) {
 	      MNA_MAP[MAP_Addr].byte[NUbus_Address.Byte] = NUbus_Data.byte[NUbus_Address.Byte];
 	    }else{
 	      // WORD WRITE
-	      switch(NUbus_Address.Byte){
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Write low half
 		MNA_MAP[MAP_Addr].byte[0] = NUbus_Data.byte[0];
 		MNA_MAP[MAP_Addr].byte[1] = NUbus_Data.byte[1];
@@ -2326,8 +2260,8 @@ void sdu_clock_pulse(){
 	    }
 	    NUbus_acknowledge=1;
 	    // Debug log
-	    if(NUbus_trace || SDU_RAM_trace){
-	      trace_log5u("SDU: MNA MAP ent 0x%X wrote: "
+	    if (NUbus_trace || SDU_RAM_trace) {
+	      trace_log_5u("SDU: MNA MAP ent 0x%X wrote: "
 			"Enable %X Spare %X NB-Page 0x%X (0x%X)\n",
 			MAP_Addr,
 			MNA_MAP[MAP_Addr].Enable,
@@ -2344,7 +2278,7 @@ void sdu_clock_pulse(){
       /*
       case 0x19000 ... 0x80000:
 	// What are these?
-	if(NUbus_Request == VM_READ){
+	if (NUbus_Request == VM_READ) {
 	  // Let's see where this goes!
 	  NUbus_Data.word = 0x0; // DEADBEEF;
 	  NUbus_acknowledge=1;
@@ -2366,9 +2300,9 @@ void sdu_clock_pulse(){
 	{
 	  nuData RTC_Data;
 	  RTC_Data.word = 0;
-	  switch(rtc_addr){
+	  switch(rtc_addr) {
 	  case 0x00 ... 0x09:
-	    if(RTC_REGA.Update_In_Progress == 0){
+	    if (RTC_REGA.Update_In_Progress == 0) {
 	      RTC_Data.word = RTC_Counter[rtc_addr];
 	    }else{
 	      RTC_Data.word = 0;
@@ -2393,9 +2327,9 @@ void sdu_clock_pulse(){
 	  default:
 	    RTC_Data.word = 0;
 	  }
-	  if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
-	    if(NUbus_Request == VM_READ){
-	      switch(NUbus_Address.Byte){
+	  if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
+	    if (NUbus_Request == VM_READ) {
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Read Low Half
 		NUbus_Data.byte[1] = RTC_Data.byte[1];
 		NUbus_Data.byte[0] = RTC_Data.byte[0];
@@ -2420,15 +2354,15 @@ void sdu_clock_pulse(){
 	      // BYTE READ
 	      NUbus_Data.byte[NUbus_Address.Byte] = RTC_Data.byte[NUbus_Address.Byte];
 	    }
-	    trace_log3u("RTC: Data Read, returned 0x%X for addr 0x%X "
+	    trace_log_3u("RTC: Data Read, returned 0x%X for addr 0x%X "
 		      "and request %o\n",
 		   NUbus_Data.word,NUbus_Address.raw,NUbus_Request);
 	    NUbus_acknowledge=1;
 	    return;
 	  }
-	  if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
-	    if(NUbus_Request == VM_WRITE){
-	      switch(NUbus_Address.Byte){
+	  if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
+	    if (NUbus_Request == VM_WRITE) {
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Write Low Half
 		RTC_Data.byte[1] = NUbus_Data.byte[1];
 		RTC_Data.byte[0] = NUbus_Data.byte[0];
@@ -2454,9 +2388,9 @@ void sdu_clock_pulse(){
 	      RTC_Data.byte[NUbus_Address.Byte] = NUbus_Data.byte[NUbus_Address.Byte];
 	    }
 	    // Process bits
-	    switch(rtc_addr){
+	    switch(rtc_addr) {
 	    case 0x00 ... 0x09:
-	      if(RTC_REGA.Update_In_Progress == 0){
+	      if (RTC_REGA.Update_In_Progress == 0) {
 		RTC_Counter[rtc_addr] = RTC_Data.byte[0];
 	      }
 	      break;
@@ -2478,7 +2412,7 @@ void sdu_clock_pulse(){
 	      RTC_RAM[rtc_addr-0x0E] = RTC_Data.byte[0];
 	      break;
 	    }
-	    trace_log1u("RTC: Data Write, data 0x%X\n",NUbus_Data.word);
+	    trace_log_1u("RTC: Data Write, data 0x%X\n",NUbus_Data.word);
 	    NUbus_acknowledge=1;
 	    return;
 	  }
@@ -2486,9 +2420,9 @@ void sdu_clock_pulse(){
 	break;
       case 0x1c124: // RTC Address Register
 	// Lisp will write an address here
-	if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
-	  if(NUbus_Request == VM_READ){
-	    switch(NUbus_Address.Byte){
+	if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
+	  if (NUbus_Request == VM_READ) {
+	    switch(NUbus_Address.Byte) {
 	    case 1: // Read Low Half
 	      NUbus_Data.byte[1] = 0;
 	      NUbus_Data.byte[0] = rtc_addr;
@@ -2511,20 +2445,20 @@ void sdu_clock_pulse(){
 	    }
 	  }else{
 	    // BYTE READ
-	    if(NUbus_Address.Byte == 0){
+	    if (NUbus_Address.Byte == 0) {
 	      NUbus_Data.byte[NUbus_Address.Byte] = rtc_addr;
 	    }else{
 	      NUbus_Data.byte[NUbus_Address.Byte] = 0;
 	    }
 	  }
-	  trace_log3u("RTC: Address Read, returned 0x%X for addr 0x%X and request %o\n",
+	  trace_log_3u("RTC: Address Read, returned 0x%X for addr 0x%X and request %o\n",
 		 NUbus_Data.word,NUbus_Address.raw,NUbus_Request);
 	  NUbus_acknowledge=1;
 	  return;
 	}
-	if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
-	  if(NUbus_Request == VM_WRITE){
-	    switch(NUbus_Address.Byte){
+	if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
+	  if (NUbus_Request == VM_WRITE) {
+	    switch(NUbus_Address.Byte) {
 	    case 1: // Write Low Half
 	      rtc_addr = NUbus_Data.byte[0];
 	      break;
@@ -2544,32 +2478,32 @@ void sdu_clock_pulse(){
 	    }
 	  }else{
 	    // BYTE WRITE
-	    if(NUbus_Address.Byte == 0){ rtc_addr = NUbus_Data.byte[NUbus_Address.Byte]; }
+	    if (NUbus_Address.Byte == 0) { rtc_addr = NUbus_Data.byte[NUbus_Address.Byte]; }
 	  }
 	  // Process bits
-	  trace_log1u("RTC: Address Write, data 0x%X\n",NUbus_Data.word);
+	  trace_log_1u("RTC: Address Write, data 0x%X\n",NUbus_Data.word);
 	  NUbus_acknowledge=1;
 	  return;
 	}
 	break;
 
       case 0x01c1fc: // Multibus Interrupt 7
-	if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
+	if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
 	  // extern int SMD_Controller_State;
 	  extern int SDU_disk_trace;
-	  if(NUbus_Data.byte[0] != 0){
-	    if(SDU_disk_trace){
+	  if (NUbus_Data.byte[0] != 0) {
+	    if (SDU_disk_trace) {
 	      trace_log("SDU: Set Interrupt 7\n");
 	    }
 	    multibus_interrupt(7);
 	    /*
-	      if(SMD_Controller_State == 0){
+	      if (SMD_Controller_State == 0) {
 	        // Start operations
 		SMD_Controller_State = 93;
 	      }
 	    */
 	  }else{
-	    if(SDU_disk_trace){
+	    if (SDU_disk_trace) {
 	      trace_log("SDU: Clear Interrupt 7\n");
 	    }
 	    clear_multibus_interrupt(7);
@@ -2589,12 +2523,12 @@ void sdu_clock_pulse(){
       case 0x02ff02: // CSR
 	// Writing 7 = DRIVE DATA LINES
 	// Writing 4 = DON'T DRIVE DATA LINES
-        if(NUbus_Request == VM_BYTE_WRITE && NUbus_Data.byte[2] == 07){
+        if (NUbus_Request == VM_BYTE_WRITE && NUbus_Data.byte[2] == 07) {
 	  BB_Drive_Data_Lines = 1;
           NUbus_acknowledge=1;
 	  break;
         }
-        if(NUbus_Request == VM_BYTE_WRITE && NUbus_Data.byte[2] == 04){
+        if (NUbus_Request == VM_BYTE_WRITE && NUbus_Data.byte[2] == 04) {
 	  BB_Drive_Data_Lines = 0;
           NUbus_acknowledge=1;
 	  break;
@@ -2605,17 +2539,17 @@ void sdu_clock_pulse(){
 	break;
 
       case 0x02ff04: // DATA / LO DATA
-	if(NUbus_Request == VM_WRITE){
+	if (NUbus_Request == VM_WRITE) {
 	  BB_Data.hword[0] = NUbus_Data.hword[0];
 	  NUbus_acknowledge=1;
 	  break;
 	}
-	if(NUbus_Request == VM_BYTE_WRITE){
+	if (NUbus_Request == VM_BYTE_WRITE) {
 	  BB_Data.byte[0] = NUbus_Data.byte[0];
 	  NUbus_acknowledge=1;
 	  break;
 	}
-	if(NUbus_Request == VM_READ){
+	if (NUbus_Request == VM_READ) {
 	  NUbus_Data.hword[0] = BB_Data.hword[0];
 	  NUbus_Data.hword[1] = 0;
 	  NUbus_acknowledge=1;
@@ -2627,7 +2561,7 @@ void sdu_clock_pulse(){
 	break;
 
       case 0x02ff05: // HI DATA
-	if(NUbus_Request == VM_BYTE_WRITE){
+	if (NUbus_Request == VM_BYTE_WRITE) {
 	  BB_Data.byte[1] = NUbus_Data.byte[1];
 	  NUbus_acknowledge=1;
 	  break;
@@ -2638,28 +2572,28 @@ void sdu_clock_pulse(){
 	break;
 
       case 0x02ff06: // Control
-	if(NUbus_Request == VM_BYTE_WRITE){
+	if (NUbus_Request == VM_BYTE_WRITE) {
 	  BB_Reg = (~NUbus_Data.byte[2])&0x03;
 
 	  // 0x08 = REQ.L (Strobe)
 	  // 0x04 = READ DATA
 	  // 0x03 = REG (inverted)
-	  if(NUbus_Data.byte[2]&0x08){
+	  if (NUbus_Data.byte[2]&0x08) {
 	    trace_log("BURR-BROWN: ");
-	    if(NUbus_Data.byte[2]&0x04){
+	    if (NUbus_Data.byte[2]&0x04) {
 	      trace_log("READ ");
 	    }else{
 	      trace_log("WRITE ");
 	    }
 	    trace_log("REG %X",BB_Reg);
-	    if(!(NUbus_Data.byte[2]&0x04)){
+	    if (!(NUbus_Data.byte[2]&0x04)) {
 	      trace_log(" DATA 0x%X",BB_Data.word);
 	      // WRITE EXECUTION
 	      // WRITE REG 0 DATA 0x2
-	      switch(BB_Reg){
+	      switch(BB_Reg) {
 	      case 0: // MODE REG
 		BB_Mode_Reg = BB_Data.byte[0];
-		if(BB_Mode_Reg&0x02){
+		if (BB_Mode_Reg&0x02) {
 		  // RESET
 		  extern uint8_t debug_master_mode;
 		  trace_log(" (RESET)");
@@ -2669,11 +2603,11 @@ void sdu_clock_pulse(){
 		}
 		break;
 	      case 1:
-		if(BB_Mode_Reg&0x01){
+		if (BB_Mode_Reg&0x01) {
 		  // START WRITE
 		  trace_log(" (START WRITE: ADDR 0x%X DATA 0x%X)",BB_Remote_Addr.raw,BB_Remote_Data.word);
-		  if(BB_Drive_Data_Lines != 1){ trace_log(" !!DDL!!"); }
-		  if(!(BB_Mode_Reg&0x04)){
+		  if (BB_Drive_Data_Lines != 1) { trace_log(" !!DDL!!"); }
+		  if (!(BB_Mode_Reg&0x04)) {
 		    debug_tx_rq(VM_BYTE_WRITE,BB_Remote_Addr.raw,BB_Remote_Data.word);
 		  }else{
 		    debug_tx_rq(VM_WRITE,BB_Remote_Addr.raw,BB_Remote_Data.word);
@@ -2684,7 +2618,7 @@ void sdu_clock_pulse(){
 		}
 		break;
 	      case 2:
-		if(BB_Mode_Reg&0x01){
+		if (BB_Mode_Reg&0x01) {
 		  // Low Addr Load
 		  BB_Remote_Addr.hword[0] = BB_Data.hword[0];
 		}else{
@@ -2693,7 +2627,7 @@ void sdu_clock_pulse(){
 		}
 		break;
 	      case 3:
-		if(BB_Mode_Reg&0x01){
+		if (BB_Mode_Reg&0x01) {
 		  // Hi Addr Load
 		  BB_Remote_Addr.hword[1] = BB_Data.hword[0];
 		}else{
@@ -2703,27 +2637,27 @@ void sdu_clock_pulse(){
 	      }
 	    }else{
 	      // READ EXECUTION
-	      switch(BB_Reg){
+	      switch(BB_Reg) {
 	      case 0: // MODE REG
 		// 0x300 = RESPONSE BITS
 		// Let's try this
-		while(BB_Remote_Result == 1){
+		while(BB_Remote_Result == 1) {
 		  debug_clockpulse(); // Hang for IO
 		}
-		if(BB_Remote_Result == 2){
+		if (BB_Remote_Result == 2) {
 		  // Success
 		  BB_Data.word = 0x0300|BB_Mode_Reg;
 		}
-		if(BB_Remote_Result == 3){
+		if (BB_Remote_Result == 3) {
 		  // Error
 		  BB_Data.word = 0x0100|BB_Mode_Reg;
 		}
 		break;
 	      case 1:
-		if(BB_Mode_Reg&0x01){
+		if (BB_Mode_Reg&0x01) {
 		  // START READ
 		  trace_log(" (START READ: ADDR 0x%X)",BB_Remote_Addr.raw);
-		  if(!(BB_Mode_Reg&0x04)){
+		  if (!(BB_Mode_Reg&0x04)) {
 		    debug_tx_rq(VM_BYTE_READ,BB_Remote_Addr.raw,BB_Remote_Data.word);
 		  }else{
 		    debug_tx_rq(VM_READ,BB_Remote_Addr.raw,BB_Remote_Data.word);
@@ -2733,7 +2667,7 @@ void sdu_clock_pulse(){
 		}
 		break;
 	      case 2:
-		if(BB_Mode_Reg&0x01){
+		if (BB_Mode_Reg&0x01) {
 		  // Lo Data Read
 		  BB_Data.hword[0] = BB_Remote_Data.hword[0];
 		}else{
@@ -2741,7 +2675,7 @@ void sdu_clock_pulse(){
 		}
 		break;
 	      case 3:
-		if(BB_Mode_Reg&0x01){
+		if (BB_Mode_Reg&0x01) {
 		  // Hi Data Read
 		  BB_Data.hword[0] = BB_Remote_Data.hword[1];
 		}else{
@@ -2768,9 +2702,9 @@ void sdu_clock_pulse(){
       case 0x030000 ... 0x31FFF: // 3com Ethernet
 	{
 	  uint16_t enet_addr = (NUbus_Address.raw&0xFFFF);
-	  if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
-	    if(NUbus_Request == VM_READ){
-	      switch(NUbus_Address.Byte){
+	  if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
+	    if (NUbus_Request == VM_READ) {
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Read Low Half
 		NUbus_Data.byte[0] = enet_read(enet_addr-1);
 		NUbus_Data.byte[1] = enet_read(enet_addr);
@@ -2798,16 +2732,16 @@ void sdu_clock_pulse(){
 	      // BYTE READ
 	      NUbus_Data.byte[NUbus_Address.Byte] = enet_read(enet_addr);
 	    }
-	    if(NUbus_trace == 1){
-	      trace_log3u("3COM: CSR Read, returned 0x%X for addr 0x%X and request %o\n",
+	    if (NUbus_trace == 1) {
+	      trace_log_3u("3COM: CSR Read, returned 0x%X for addr 0x%X and request %o\n",
 		     NUbus_Data.word,NUbus_Address.raw,NUbus_Request);
 	    }
 	    NUbus_acknowledge=1;
 	    return;
 	  }
-	  if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
-            if(NUbus_Request == VM_WRITE){
-              switch(NUbus_Address.Byte){
+	  if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
+            if (NUbus_Request == VM_WRITE) {
+              switch(NUbus_Address.Byte) {
               case 1: // Write Low Half
 		enet_write(enet_addr-1,NUbus_Data.byte[0]);
 		enet_write(enet_addr,NUbus_Data.byte[1]);
@@ -2843,10 +2777,10 @@ void sdu_clock_pulse(){
 
       case 0x100100: // SMD controller status/command registers
 	{
-	  if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
+	  if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
 	    // On read, it's the status register
-	    if(NUbus_Request == VM_READ){
-	      switch(NUbus_Address.Byte){
+	    if (NUbus_Request == VM_READ) {
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Read Low Half
 		NUbus_Data.byte[1] = 0;
 		NUbus_Data.byte[0] = smd_read(0);
@@ -2874,11 +2808,11 @@ void sdu_clock_pulse(){
 	    NUbus_acknowledge=1;
 	    return;
 	  }
-	  if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
+	  if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
 	    // On write, it's the command register
 	    // SMD_RCmd
-	    if(NUbus_Request == VM_WRITE){
-	      switch(NUbus_Address.Byte){
+	    if (NUbus_Request == VM_WRITE) {
+	      switch(NUbus_Address.Byte) {
 	      case 1: // Write Low Half
 		smd_write(0,NUbus_Data.byte[0]);
 		break;
@@ -2907,12 +2841,12 @@ void sdu_clock_pulse(){
 	}
 	break;
       case 0x100104: // SMD controller IOPB base (hi)
-	if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
+	if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
 	  ld_die_rq = 1;
 	}
-	if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
-	  if(NUbus_Request == VM_WRITE){
-	    switch(NUbus_Address.Byte){
+	if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
+	  if (NUbus_Request == VM_WRITE) {
+	    switch(NUbus_Address.Byte) {
 	    case 1: // Write Low Half
 	      smd_write(1,NUbus_Data.byte[0]);
 	      break;
@@ -2940,12 +2874,12 @@ void sdu_clock_pulse(){
 	}
 	break;
       case 0x100108: // SMD controller IOPB base (middle)
-	if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
+	if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
 	  ld_die_rq = 1;
 	}
-	if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
-	  if(NUbus_Request == VM_WRITE){
-	    switch(NUbus_Address.Byte){
+	if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
+	  if (NUbus_Request == VM_WRITE) {
+	    switch(NUbus_Address.Byte) {
 	    case 1: // Write Low Half
 	      smd_write(2,NUbus_Data.byte[0]);
 	      break;
@@ -2973,12 +2907,12 @@ void sdu_clock_pulse(){
 	}
 	break;
       case 0x10010c: // SMD controller IOPB base (low)
-	if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
+	if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
 	  ld_die_rq = 1;
 	}
-	if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
-	  if(NUbus_Request == VM_WRITE){
-	    switch(NUbus_Address.Byte){
+	if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
+	  if (NUbus_Request == VM_WRITE) {
+	    switch(NUbus_Address.Byte) {
 	    case 1: // Write Low Half
 	      smd_write(3,NUbus_Data.byte[0]);
 	      break;
@@ -3007,8 +2941,8 @@ void sdu_clock_pulse(){
 	break;
       case 0x100110: // SMD controller IOPB base (lower)
 	// Lisp does this deliberately. Why?
-	if(NUbus_Request == VM_WRITE){
-	  switch(NUbus_Address.Byte){
+	if (NUbus_Request == VM_WRITE) {
+	  switch(NUbus_Address.Byte) {
 	  case 1: // Write Low Half
 	    smd_write(4,NUbus_Data.byte[0]);
 	    break;
@@ -3031,7 +2965,7 @@ void sdu_clock_pulse(){
 	  break;
 	}
 	// Otherwise...
-	trace_log2u("SDU: Unimplemented address 0x%X (0x%X)\n",
+	trace_log_2u("SDU: Unimplemented address 0x%X (0x%X)\n",
 	       NUbus_Address.Addr,NUbus_Address.raw);
 	lambda_dump(DUMP_ALL);
 	ld_die_rq=1;
@@ -3040,21 +2974,22 @@ void sdu_clock_pulse(){
 	// Tapemaster controller
       case 0x100180:
 	// Channel Attention
-	if(NUbus_Request == VM_WRITE){
+	if (NUbus_Request == VM_WRITE) {
 	  tapemaster_attn();
 	  NUbus_acknowledge=1;
 	  return;
 	}
+	__attribute__ ((fallthrough));
 	// Falls into...
       case 0x100184:
 	// Reset CPU
-	if(NUbus_Request == VM_WRITE){
+	if (NUbus_Request == VM_WRITE) {
 	  tapemaster_reset();
           NUbus_acknowledge=1;
           return;
         }
 	// Die if we ended up here
-        trace_log2u("SDU: Unimplemented address 0x%X (0x%X)\n",
+        trace_log_2u("SDU: Unimplemented address 0x%X (0x%X)\n",
                NUbus_Address.Addr,NUbus_Address.raw);
 	lambda_dump(DUMP_ALL);
 	ld_die_rq=1;
@@ -3062,9 +2997,9 @@ void sdu_clock_pulse(){
 
 	// Excelan (we don't have one)
       case 0x100280 ... 0x1002E0:
-	if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
-	  if(NUbus_Request == VM_READ){
-	    switch(NUbus_Address.Byte){
+	if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
+	  if (NUbus_Request == VM_READ) {
+	    switch(NUbus_Address.Byte) {
 	    case 1: // Read Low Half
 	      NUbus_Data.byte[0] = 0xFF;
 	      NUbus_Data.byte[1] = 0;
@@ -3095,9 +3030,9 @@ void sdu_clock_pulse(){
 	  NUbus_acknowledge=1;
 	  return;
 	}
-	if(NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE){
-	  if(NUbus_Request == VM_WRITE){
-	    switch(NUbus_Address.Byte){
+	if (NUbus_Request == VM_WRITE || NUbus_Request == VM_BYTE_WRITE) {
+	  if (NUbus_Request == VM_WRITE) {
+	    switch(NUbus_Address.Byte) {
 	    case 1: // Write Low Half
 	      break;
 
@@ -3124,14 +3059,14 @@ void sdu_clock_pulse(){
 	// SDU does not have a config prom
       case 0xFFF800 ... 0xFFF8FF:
       case 0xFFFF64 ... 0xFFFFFF:
-	if(NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ){
+	if (NUbus_Request == VM_READ || NUbus_Request == VM_BYTE_READ) {
 	  NUbus_Data.word = 0;
 	  NUbus_acknowledge=1;
 	}
 	return;
 
       default:
-        trace_log2u("SDU: Unimplemented address 0x%X (0x%X)\n",
+        trace_log_2u("SDU: Unimplemented address 0x%X (0x%X)\n",
                NUbus_Address.Addr,NUbus_Address.raw);
 	lambda_dump(DUMP_ALL);
 	ld_die_rq=1;
@@ -3142,7 +3077,7 @@ void sdu_clock_pulse(){
 }
 
 // TEMPORARY: Lisp is about to start, dump its configuration
-void dump_lisp_start_state(int I){
+void dump_lisp_start_state(int I) {
   uint32_t proc_conf_base = 0;
   system_configuration_qs *sys_conf = 0;
   processor_configuration_qs *proc_conf = 0;
@@ -3150,35 +3085,35 @@ void dump_lisp_start_state(int I){
   extern unsigned char MEM_RAM[2][0x800000];
   // Obtain proc conf base from Q
   proc_conf_base = pS[I].Qregister;
-  trace_log2u("LISP: PROC %d CONF BASE = 0x%X\n",
+  trace_log_2u("LISP: PROC %d CONF BASE = 0x%X\n",
 	      I,
 	      proc_conf_base);
   // This is in nubus RAM, not SDU RAM!
-  if((proc_conf_base&0xFF000000) == 0xF9000000){
+  if ((proc_conf_base&0xFF000000) == 0xF9000000) {
     proc_conf = (processor_configuration_qs *)&MEM_RAM[0][proc_conf_base&0x7FFFFF];
   }
-  if((proc_conf_base&0xFF000000) == 0xFA000000){
+  if ((proc_conf_base&0xFF000000) == 0xFA000000) {
     proc_conf = (processor_configuration_qs *)&MEM_RAM[1][proc_conf_base&0x7FFFFF];
   }
-  if((proc_conf_base&0xFF000000) == 0xFF000000){
+  if ((proc_conf_base&0xFF000000) == 0xFF000000) {
     proc_conf = (processor_configuration_qs *)&SDU_RAM[proc_conf_base&0xFFFF];
   }
-  if(proc_conf != 0){
-    trace_log1u("LISP: SYS CONF BASE = 0x%X\n",proc_conf->sys_conf_ptr);
-    if((proc_conf->sys_conf_ptr&0xFF000000) == 0xF9000000){
+  if (proc_conf != 0) {
+    trace_log_1u("LISP: SYS CONF BASE = 0x%X\n",proc_conf->sys_conf_ptr);
+    if ((proc_conf->sys_conf_ptr&0xFF000000) == 0xF9000000) {
       sys_conf = (system_configuration_qs *)&MEM_RAM[0][proc_conf->sys_conf_ptr&0x7FFFFF];
     }
-    if((proc_conf->sys_conf_ptr&0xFF000000) == 0xFA000000){
+    if ((proc_conf->sys_conf_ptr&0xFF000000) == 0xFA000000) {
       sys_conf = (system_configuration_qs *)&MEM_RAM[1][proc_conf->sys_conf_ptr&0x7FFFFF];
     }
-    if((proc_conf->sys_conf_ptr&0xFF000000) == 0xFF000000){
+    if ((proc_conf->sys_conf_ptr&0xFF000000) == 0xFF000000) {
       sys_conf = (system_configuration_qs *)&SDU_RAM[proc_conf->sys_conf_ptr&0xFFFF];
     }
     // Print memory configuration
     x = 0;
-    while(x < 10){
-      if(proc_conf->memory_base[x] != 0){
-	trace_log5u("LISP: PROC %d: MEMORY MAP %d: "
+    while(x < 10) {
+      if (proc_conf->memory_base[x] != 0) {
+	trace_log_5u("LISP: PROC %d: MEMORY MAP %d: "
 		  "0x%X - 0x%X (0x%X bytes)\n",
 		  I,
 		  x,
@@ -3190,26 +3125,26 @@ void dump_lisp_start_state(int I){
     }
     // Print chaos share stuff
     x = 0;
-    while(x < 5){
-      if(proc_conf->chaos_share[x] != 0){
-	trace_log3u("LISP: PROC %d: CHAOS SHARE %d @ 0x%X\n",
+    while(x < 5) {
+      if (proc_conf->chaos_share[x] != 0) {
+	trace_log_3u("LISP: PROC %d: CHAOS SHARE %d @ 0x%X\n",
 	       I,x,proc_conf->chaos_share[x]);
       }
       x++;
     }
     // Print other stuff
-    if(sys_conf != 0){
-      trace_log1u("LISP: SYSCONF: SHARE STRUCT POINTER 0x%X\n",
+    if (sys_conf != 0) {
+      trace_log_1u("LISP: SYSCONF: SHARE STRUCT POINTER 0x%X\n",
 		sys_conf->share_struct_pointer);
-      trace_log3u("LISP: SYSCONF: GLOBAL SHARED AREA 0x%X - 0x%X (0x%X bytes)\n",
+      trace_log_3u("LISP: SYSCONF: GLOBAL SHARED AREA 0x%X - 0x%X (0x%X bytes)\n",
 		sys_conf->global_shared_base,
 		((sys_conf->global_shared_base+sys_conf->global_shared_size)-1),
 		sys_conf->global_shared_size);
-      trace_log3u("LISP: SYSCONF: SDU NUBUS 0x%X - 0x%X (0x%X bytes)\n",
+      trace_log_3u("LISP: SYSCONF: SDU NUBUS 0x%X - 0x%X (0x%X bytes)\n",
 	     sys_conf->sdu_nubus_base,
 		((sys_conf->sdu_nubus_base+sys_conf->sdu_nubus_size)-1),
 		sys_conf->sdu_nubus_size);
-      trace_log1u("LISP: SYSCONF: CHAOS SHAREDEV BUFFER SIZE 0x%X\n",
+      trace_log_1u("LISP: SYSCONF: CHAOS SHAREDEV BUFFER SIZE 0x%X\n",
 		sys_conf->chaos_sharedev_buffer_size_in_bytes);
     }
   }

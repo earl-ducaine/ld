@@ -7,6 +7,9 @@ declare -a FILES=("CMOS.RAM" "disks/disk.img" "ld.conf")
 function backup-ld-state {
     # Declare an array variable
     pushd .
+    cd "$TARGET_REPO"
+    git pull
+    popd
     for file in "${FILES[@]}"
     do
 	echo "copying: $file"
@@ -14,7 +17,6 @@ function backup-ld-state {
     done
     pushd .
     cd "$TARGET_REPO"
-    git pull
     git add -u
     git commit -m "Updating revision"
     git push

@@ -1390,8 +1390,8 @@ void nubus_cycle(int sdu){
   icount++; // Main cycle
 }
 
-// Main
-int main(int argc, char *argv[]){
+// Main entry point.
+int lam_main(int argc, char *argv[]) {
   FILE *config;
   keyboard_io_ring_top[0] = keyboard_io_ring_top[1] = 0;
   keyboard_io_ring_bottom[0] = keyboard_io_ring_bottom[1] = 0;
@@ -1552,7 +1552,6 @@ int main(int argc, char *argv[]){
       // Update status line
       extern char tape_fn[];
       sprintf(statbuf,"LambdaDelta: VC %d | Tape: %s | ",active_console,tape_fn);
-      printf("LambdaDelta: VC %d | Tape: %s | ", active_console, tape_fn);
       switch(cp_state[active_console]){
       case 0:
 	// Cold (or under 8088 control!)
@@ -1590,14 +1589,6 @@ int main(int argc, char *argv[]){
       }
       sprintf(statbuf,"%s | DT %ld",statbuf,(emu_time-real_time));
       set_caption(statbuf);
-// #ifdef SDL1
-//       SDL_WM_SetCaption(statbuf, "LambdaDelta");
-// #endif
-// #ifdef SDL2
-//       SDL_SetWindowTitle(SDLWindow, statbuf);
-// #endif
-
-
       stat_time = 0;
     }
     // Emulated time passed
