@@ -10,7 +10,7 @@
  This document is proprietary to GigaMos Systems, Inc., and is
  intended for internal use only.  Unauthorized use is prohibited.
 
-** Part 1: What is this document for?
+** Part 1: Purpose
    This document describes the process of building new Lambda software
    systems, "from scratch".  This can only be done by first
    constructing a "cold load band," a partition of your Lambda disk
@@ -23,13 +23,15 @@
    computation to construct a new, clean LISP world for use in
    development and in running application software.
 
-   Making a cold load world is, then, a rather drastic step.  When is
-   it necessary or desirable to make a cold load world?  To answer
-   this question, it is almost necessary to understand completely the
-   mechanism involved in building a cold load world.  Put simply,
-   though, new cold load worlds reflect fundamental LISP changes made
-   to your environment through modification of certain critical source
-   files.  These files are listed in the file:
+   Making a cold load world is, then, a rather drastic step.  
+
+   You might ask: when is it necessary to make a cold load world?  Put
+   simply, changes made to a set of files that implement low level
+   Lisp and LM environment implementations require the generation of a
+   new cold boot.
+
+   You can find a list of those files in the main LM source code
+   hierarchy:
 
    sys:sys;inner-system-file-alist
 
@@ -77,7 +79,42 @@
     complete knowledge of the status of system bugs at the time of the
     cold load construction.
 
-** Part 2: compiling the system
+** $art 2: fix misc. bugs
+
+   lama: l.sys2; class
+
+   Edit DEFCLASS
+   #+BEGIN_SRC lisp :tangle no
+     (DEFMACRO DEFCLASS (CLASS-SYMBOL SUPERCLASS-SYMBOL INSTANCE-PATTERN
+				 &OPTIONAL (ACCESSOR-METHODS T))
+       "Defines a class of ENTITYs under SUPERCLASS-SYMBOL.  INSTANCE
+     PATTERN contains only the instance varibles not contained in the
+     superclass."
+	 `(PROGN 'COMPILE (SPECIAL ,CLASS-SYMBOL)
+		 (EVAL-WHEN (COMPILE)
+		   (PUSH ',*MACROARG* FILE-LOCAL-DECLARATIONS))
+		 (DEFCLASS-1 ,CLASS-SYMBOL ,SUPERCLASS-SYMBOL ,INSTANCE-PATTERN)
+		 . ,(COND (ACCESSOR-METHODS
+			   (MAKE-ACCESSOR-METHODS CLASS-SYMBOL INSTANCE-PATTERN)))))
+   #+END_SRC
+
+   to be,
+
+   #+BEGIN_SRC lisp :tangle no
+     (DEFMACRO DEFCLASS (CLASS-SYMBOL SUPERCLASS-SYMBOL INSTANCE-PATTERN
+				 &OPTIONAL (ACCESSOR-METHODS T))
+       "Defines a class of ENTITYs under SUPERCLASS-SYMBOL.  INSTANCE
+     PATTERN contains only the instance varibles not contained in the
+     superclass."
+	 `(PROGN 'COMPILE (SPECIAL ,CLASS-SYMBOL)
+		 ;; (EVAL-WHEN (COMPILE)
+		 ;;   (PUSH ',*MACROARG* FILE-LOCAL-DECLARATIONS))
+		 (DEFCLASS-1 ,CLASS-SYMBOL ,SUPERCLASS-SYMBOL ,INSTANCE-PATTERN)
+		 . ,(COND (ACCESSOR-METHODS
+			   (MAKE-ACCESSOR-METHODS CLASS-SYMBOL INSTANCE-PATTERN)))))
+   #+END_SRC
+
+** Part 3: compiling the system
 						
    1. Begin by checking to see that all desired patches have been
       included in the world (i.e., their source files updated to
@@ -148,11 +185,8 @@
       respectively, where x is an integer less than 10.  Note that it
       is acceptable to use an existing, obsolete "LOD" partition in
       place of a "CLD" partition.
-
-
 		  
-** Part 3: loading the cold load builder
-
+** Part 4: loading the cold load builder
    Recompile and/or load the cold load builder by evaluating
 
    #+BEGIN_SRC lisp :tangle yes
@@ -167,8 +201,7 @@
 
    This should take at most twenty minutes.
 
-
-** Part 4: making a cold load world
+** Part 5: making a cold load world
 
    1. Now use the cold load builder to create the cold load world and
       store it in the 12K page "CLDx" band.  Execute:
@@ -188,8 +221,7 @@
       ~cold:make-cold~ requires confirmation before taking effect; after user
       confirmation, this process takes approximately forty minutes to complete.
 
-** Part 6: Making the new lambda world from the cold load world
-
+** Part 7: Making the new lambda world from the cold load world
 
   5. From monitor 1:
 
@@ -227,10 +259,16 @@
     Set the current band to the "CLD" band located in step (3), by
     typing
 
+
+    ;; (alt method (si:%halt) F11)
+
     ~COMMAND: set-band CLDx~
 
-    to the COMMAND: prompt.
+    #+BEGIN_SRC lisp :tangle yes 
+      set-band "lod<x>"
+    #+END_SRC
 
+    where <x> is some number where the cold boot partition is
 
   9a. From monitor 1:
 
@@ -262,8 +300,7 @@
 
        Booting all processors takes approximately fifteen minutes to finish.
 
-
-  9b. From monitor 2 (remediative):
+  9b. From monitor 2 -- <remediative>:
 
       Note: Only execute this step if the companion processor does not
       start booting in response to the ~:reboot~ command.

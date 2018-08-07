@@ -36,6 +36,7 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+
 #ifdef HAVE_LINUX_IF_H
 #include <linux/if.h>
 #endif
@@ -53,6 +54,7 @@
 #include "nubus.h"
 #include "sdu.h"
 #include "lambda_cpu.h"
+#include "trace.h"
 
 /* 3COM 3C400 Multibus Ethernet */
 /* Note that Lambda requires the byte-ordering switch to be ON!
@@ -373,7 +375,7 @@ void enet_reset() {
 uint8_t enet_read(uint16_t addr){
   uint16_t subaddr = 0;
   if(enet_trace){
-    printf("3COM: enet_read addr 0x%X\n",addr);
+    trace_log_1u("3COM: enet_read addr 0x%X\n", addr);
   }
   switch(addr){
   case 0x0000 ... 0x03FF: // MEBACK
@@ -400,7 +402,7 @@ uint8_t enet_read(uint16_t addr){
     return(ETH_RX_Buffer[1][subaddr]);
     break;
   default:
-    printf("3COM: UNKNOWN READ ADDR 0x%X\n",addr);
+    trace_log_1u("3COM: UNKNOWN READ ADDR 0x%X\n", addr);
     ld_die_rq = 1;
   }
   return(0xFF);
@@ -438,18 +440,23 @@ void enet_write(uint16_t addr,uint8_t data){
       ETH_MECSR_MEBACK_Wt.byte[addr&0x03] = data;
       // Process bits
       if(ETH_MECSR_MEBACK_Wt.Reset == 1){
-	printf("3COM: RESET\n");
+	trace_log("3COM: RESET\n");
 	enet_reset();
 	return;
       }
       if(ETH_MECSR_MEBACK_Wt.AMSW == 1 && ETH_MECSR_MEBACK.AMSW == 0){
-	printf("3COM: AMSW given to interface: Our address is %.2X:%.2X:%.2X:%.2X:%.2X:%.2X\n",
-	       ETH_Addr_RAM[0],ETH_Addr_RAM[1],ETH_Addr_RAM[2],ETH_Addr_RAM[3],ETH_Addr_RAM[4],ETH_Addr_RAM[5]);
+	trace_log_6u("3COM: AMSW given to interface: Our address is %.2X:%.2X:%.2X:%.2X:%.2X:%.2X\n",
+	       ETH_Addr_RAM[0],
+	       ETH_Addr_RAM[1],
+	       ETH_Addr_RAM[2],
+	       ETH_Addr_RAM[3],
+	       ETH_Addr_RAM[4],
+	       ETH_Addr_RAM[5]);
 	ETH_MECSR_MEBACK.AMSW = 1;
       }
       if(ETH_MECSR_MEBACK_Wt.TBSW == 1 && ETH_MECSR_MEBACK.TBSW == 0){
 	if(enet_trace){
-	  printf("3COM: TBSW given to interface: Packet offset ");
+	  trace_log("3COM: TBSW given to interface: Packet offset ");
 	}
 	uint32_t pktoff = (ETH_TX_Buffer[0x00]&0x07);
 	uint32_t pktlen = 0x800;

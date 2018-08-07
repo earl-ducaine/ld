@@ -195,7 +195,7 @@ void trace_kernel_c (const char* str) {
 #endif
 
 // Keyboard TX ring
-int put_rx_ring(int vn,unsigned char ch){
+int put_rx_ring(int vn,unsigned char ch) {
   // printf("put_rx_ring: code %o @ %d\n",ch,keyboard_io_ring_top);
   keyboard_io_ring[vn][keyboard_io_ring_top[vn]] = ch;
   keyboard_io_ring_top[vn]++;
@@ -206,7 +206,7 @@ int put_rx_ring(int vn,unsigned char ch){
 }
 
 // Mouse TX ring
-int put_mouse_rx_ring(int vn,unsigned char ch){
+int put_mouse_rx_ring(int vn,unsigned char ch) {
   // printf("put_rx_ring: code %o @ %d\n",ch,keyboard_io_ring_top);
   mouse_io_ring[vn][mouse_io_ring_top[vn]] = ch;
   mouse_io_ring_top[vn]++;
@@ -216,16 +216,16 @@ int put_mouse_rx_ring(int vn,unsigned char ch){
   return 0;
 }
 
-void read_sdu_rom(){
+void read_sdu_rom() {
   extern uint8_t SDU_ROM[];
   int rom_fd = open("roms/SDU.ROM",O_RDONLY);
-  if(rom_fd < 0){
+  if (rom_fd < 0) {
     perror("SDU:open");
     exit(-1);
-  }else{
+  } else {
     ssize_t rv=0;
     rv = read(rom_fd,SDU_ROM,64*1024);
-    if(rv != (64*1024)){
+    if (rv != (64*1024)) {
       perror("SDU:read");
       exit(-1);
     }
@@ -233,16 +233,16 @@ void read_sdu_rom(){
   }
 }
 
-void read_vcmem_rom(){
+void read_vcmem_rom() {
   extern uint8_t VCMEM_ROM[];
   int rom_fd = open("roms/VCMEM.ROM",O_RDONLY);
-  if(rom_fd < 0){
+  if (rom_fd < 0) {
     perror("VCMEM:open");
     exit(-1);
-  }else{
+  } else {
     ssize_t rv=0;
     rv = read(rom_fd,VCMEM_ROM,2048);
-    if(rv != 2048){
+    if (rv != 2048) {
       perror("VCMEM:read");
       exit(-1);
     }
@@ -250,16 +250,16 @@ void read_vcmem_rom(){
   }
 }
 
-void read_mem_rom(){
+void read_mem_rom() {
   extern uint8_t MEM_ROM[];
   int rom_fd = open("roms/MEM.ROM",O_RDONLY);
-  if(rom_fd < 0){
+  if (rom_fd < 0) {
     perror("MEM:open");
     exit(-1);
-  }else{
+  } else {
     ssize_t rv=0;
     rv = read(rom_fd,MEM_ROM,2048);
-    if(rv != 2048){
+    if (rv != 2048) {
       perror("MEM:read");
       exit(-1);
     }
@@ -267,40 +267,40 @@ void read_mem_rom(){
   }
 }
 
-void read_nvram(){
+void read_nvram() {
   extern uint8_t CMOS_RAM[];
   int cmos_fd = open("CMOS.RAM",O_RDONLY);
-  if(cmos_fd < 0){
+  if (cmos_fd < 0) {
     perror("CMOS:open");
-  }else{
+  } else {
     ssize_t rv=0;
     rv = read(cmos_fd,CMOS_RAM,2048);
-    if(rv != 2048){
+    if (rv != 2048) {
       perror("CMOS:read");
     }
     close(cmos_fd);
   }
 }
 
-void write_nvram(){
+void write_nvram() {
   extern uint8_t CMOS_RAM[];
   int cmos_fd = open("CMOS.RAM",O_RDWR|O_CREAT,0660);
-  if(cmos_fd < 0){
+  if (cmos_fd < 0) {
     perror("CMOS:open");
-  }else{
+  } else {
     ssize_t rv=0;
     rv = write(cmos_fd,CMOS_RAM,2048);
-    if(rv != 2048){
+    if (rv != 2048) {
       perror("CMOS:write");
     }
     close(cmos_fd);
   }
 }
 
-void read_rtc_nvram(){
+void read_rtc_nvram() {
   extern uint8_t RTC_RAM[];
   int rtc_fd = open("RTC.RAM",O_RDONLY);
-  if(rtc_fd < 0){
+  if (rtc_fd < 0) {
     perror("RTC:open");
     // Initialize contents
     RTC_RAM[0] = 0x2C; // EST TZ Low
@@ -317,25 +317,25 @@ void read_rtc_nvram(){
     RTC_RAM[11] = 'i';
     RTC_RAM[12] = '.';
     RTC_RAM[13] = 0;
-  }else{
+  } else {
     ssize_t rv=0;
     rv = read(rtc_fd,RTC_RAM,50);
-    if(rv != 50){
+    if (rv != 50) {
       perror("RTC:read");
     }
     close(rtc_fd);
   }
 }
 
-void write_rtc_nvram(){
+void write_rtc_nvram() {
   extern uint8_t RTC_RAM[];
   int rtc_fd = open("RTC.RAM",O_RDWR|O_CREAT,0660);
-  if(rtc_fd < 0){
+  if (rtc_fd < 0) {
     perror("RTC:open");
-  }else{
+  } else {
     ssize_t rv=0;
     rv = write(rtc_fd,RTC_RAM,50);
-    if(rv != 50){
+    if (rv != 50) {
       perror("RTC:write");
     }
     close(rtc_fd);
@@ -378,14 +378,14 @@ const char *dtp_str[040] = {
 };
 
 // Dump
-void FB_dump(int vn){
+void FB_dump(int vn) {
   FILE *output;
-  if(vn == 0){
+  if (vn == 0) {
     output = fopen("VC0-SCREENSHOT.BMP","w+");
-  }else{
+  } else {
     output = fopen("VC1-SCREENSHOT.BMP","w+");
   }
-  if(!output){
+  if (!output) {
     printf("Can't open SCREENSHOT.BMP\n");
     return;
   }
@@ -427,10 +427,10 @@ void FB_dump(int vn){
     fwrite(rgbinfo,8,1,output);
 
     // Write pixels
-    while(x > 0){
+    while (x > 0) {
       x--;
       y=0; // 128 bytes in a row
-      while(y < 128){
+      while (y < 128) {
         unsigned char dto;
         dto=vcS[vn].AMemory[(x*128)+y];
         // Reverse bits
@@ -448,7 +448,7 @@ void FB_dump(int vn){
 
 
 // Hardware initialization
-void hw_init(){
+void hw_init() {
   // RTC initialization. The Lambda expects the RTC to read in local
   // time.
   time_t rt_sec = time(NULL);
@@ -457,11 +457,11 @@ void hw_init(){
   // to be 0-99, but lisp will use any 8 bits of data in there.  Day
   // of week, date of month, and month are based at 1.  If DST is in
   // effect, Lambda expects the clock to be offset one hour.
-  if(real_tm != NULL && real_tm->tm_isdst > 0){
+  if (real_tm != NULL && real_tm->tm_isdst > 0) {
     rt_sec -= (60*60); // Back one hour
     real_tm = localtime(&rt_sec);
   }
-  if(real_tm != NULL){
+  if (real_tm != NULL) {
     rtc_sec = real_tm->tm_sec;
     rtc_min = real_tm->tm_min;
     rtc_hour = real_tm->tm_hour;
@@ -469,7 +469,7 @@ void hw_init(){
     rtc_date = real_tm->tm_mday;
     rtc_month = (real_tm->tm_mon+1);
     rtc_year = real_tm->tm_year;
-  }else{
+  } else {
     // Default safe date. Not sure what the correct time was; 7 AM
     // seems like a reasonable before-school time slot.
     rtc_sec = 0;
@@ -494,53 +494,53 @@ void hw_init(){
 #endif
 }
 
-void lambda_dump(int opts){
+void lambda_dump(int opts) {
   FILE *output;
   char ofn[32];
   uint32_t addr=0;
   int x=0;
 
-  if(opts&DUMP_A_MEM){
+  if (opts&DUMP_A_MEM) {
     addr = 0;
     sprintf(ofn,"AMEM-%.2d.DUMP",dump_seq);
     printf("Dumping A-Memory to %s...\n",ofn);
     output = fopen(ofn,"w+");
-    if(!output){
+    if (!output) {
       printf("Can't open %s\n",ofn);
       return;
     }
-    while(addr<(1024*4)){
+    while (addr<(1024*4)) {
       fprintf(output,"[A-%.5o] 0x%.8X\n",addr,pS[0].Amemory[addr]);
       addr++;
     }
     fclose(output);
   }
-  if(opts&DUMP_M_MEM){
+  if (opts&DUMP_M_MEM) {
     addr = 0;
     sprintf(ofn,"MMEM-%.2d.DUMP",dump_seq);
     printf("Dumping M-Memory to %s...\n",ofn);
     output = fopen(ofn,"w+");
-    if(!output){
+    if (!output) {
       printf("Can't open %s\n",ofn);
       return;
     }
     fprintf(output,"PDL Index = 0%.11o, PDL Pointer = %.11o, PDL_Addr_Hi = %o\n",pS[0].pdl_index_reg,pS[0].pdl_ptr_reg,pS[0].DP_Mode.PDL_Addr_Hi);
-    while(addr<(1024*4)){
+    while (addr<(1024*4)) {
       fprintf(output,"[M-%.5o] 0x%.8X\n",addr,pS[0].Mmemory[addr]);
       addr++;
     }
     fclose(output);
   }
-  if(opts&DUMP_T_MEM){
+  if (opts&DUMP_T_MEM) {
     addr = 0;
     sprintf(ofn,"TRAM-%.2d.DUMP",dump_seq);
     printf("Dumping TRAM to %s...\n",ofn);
     output = fopen(ofn,"w+");
-    if(!output){
+    if (!output) {
       printf("Can't open %s\n",ofn);
       return;
     }
-    while(addr < 0x0FFF){
+    while (addr < 0x0FFF) {
       fprintf(output,"[T-%.4o] = 0x%.8X: next.select %o state %.3o source_cycle %o new_uinst %o\n",
 	      addr,
 	      pS[0].TRAM[addr].word,
@@ -553,27 +553,27 @@ void lambda_dump(int opts){
     }
     fclose(output);
   }
-  if(opts&DUMP_U_STACK){
+  if (opts&DUMP_U_STACK) {
     printf("Micro-stack-pointer 0%o\n",pS[0].uPCS_ptr_reg);
     x = pS[0].uPCS_ptr_reg;
-    while(x >= 0){
+    while (x >= 0) {
       int offset = 0;
       char *location = sym_find_last(1, pS[0].uPCS_stack[x]&0xFFFFF, &offset);
       char symloc[100];
-      if(location != 0){
-	if(offset != 0){
+      if (location != 0) {
+	if (offset != 0) {
 	  sprintf(symloc, "%s+%o", location, offset);
-	}else{
+	} else {
 	  sprintf(symloc, "%s", location);
 	}
-      }else{
+      } else {
 	symloc[0] = 0;
       }
       printf("uStack[%o] = %s (%o)\n",x,symloc,pS[0].uPCS_stack[x]&0xFFFFF);
       x--;
     }
   }
-  if(opts&DUMP_PDL){
+  if (opts&DUMP_PDL) {
     printf("PDL Index = 0%.11o, PDL Pointer = %.11o, PDL_Addr_Hi = %o\n",
 	   pS[0].pdl_index_reg,
 	   pS[0].pdl_ptr_reg,
@@ -602,12 +602,12 @@ void lambda_dump(int opts){
     sprintf(ofn, "PMEM-%.2d.DUMP", dump_seq);
     printf("Dumping Physical Memory to %s...\n", ofn);
     output = fopen(ofn, "w+");
-    if(!output){
+    if (!output) {
       printf("Can't open %s\n", ofn);
       return;
     }
-    // while(addr<0x1000000){ // 16MB
-    while(addr<0x0800000){ // 8MB
+    // while (addr<0x1000000) { // 16MB
+    while (addr<0x0800000) { // 8MB
       uint32_t data = debug_mem_read(addr+3);
       data <<= 8;
       data |= debug_mem_read(addr+2);
@@ -625,24 +625,24 @@ void lambda_dump(int opts){
     sprintf(ofn,"MIDMEM-%.2d.DUMP",dump_seq);
     printf("Dumping MID Memory to %s...\n",ofn);
     output = fopen(ofn,"w+");
-    if(!output){
+    if (!output) {
       printf("Can't open %s\n",ofn);
       return;
     }
-    while(addr<(1024*4)){
+    while (addr<(1024*4)) {
       DispatchWord disp_word;
       disp_word.raw = pS[0].MIDmemory[addr];
       fprintf(output,"[MID-%.5o] 0x%.8X",addr,disp_word.raw);
-      if(disp_word.raw != 0){
+      if (disp_word.raw != 0) {
 	char *location;
 	char symloc[100];
 	int offset;
 	location = "";
 	offset = 0;
 	location = sym_find_last(1, disp_word.PC, &offset);
-	if(offset != 0){
+	if (offset != 0) {
 	  sprintf(symloc, "%s+%o", location, offset);
-	}else{
+	} else {
 	  sprintf(symloc, "%s", location);
 	}
       fprintf(output," (Op %o S-M-R %o Dest %s (%o))",disp_word.Operation,disp_word.StartRead,symloc,disp_word.PC);
@@ -653,16 +653,16 @@ void lambda_dump(int opts){
     fclose(output);
   }
 #ifdef SHADOW
-  if(opts&DUMP_SHADOW_MEM){
+  if (opts&DUMP_SHADOW_MEM) {
     addr = 0;
     sprintf(ofn,"VMEM-%.2d.DUMP",dump_seq);
     printf("Dumping Shadow Memory to %s...\n",ofn);
     output = fopen(ofn,"w+");
-    if(!output){
+    if (!output) {
       printf("Can't open %s\n",ofn);
       return;
     }
-    while(addr<0x20000){
+    while (addr<0x20000) {
       extern ShadowMemoryPageEnt ShadowMemoryPageMap[0x20000];
       extern Q ShadowMemory[0x2000000];
       Q Page;
@@ -682,9 +682,9 @@ void lambda_dump(int opts){
       fprintf(output,"  LV2: Access %o Status %o Meta %.2o Force-Allowed %o Byte-Code %o PPN %.8o\n",
 	      pS[0].vm_lv2_ctl[lv2_index.raw].Access,pS[0].vm_lv2_ctl[lv2_index.raw].Status,pS[0].vm_lv2_ctl[lv2_index.raw].Meta,
 	      pS[0].vm_lv2_ctl[lv2_index.raw].Force_Allowed,pS[0].vm_lv2_adr[lv2_index.raw].Byte_Code,pS[0].vm_lv2_adr[lv2_index.raw].PPN);
-      if(ShadowMemoryPageMap[addr].Written != 0 || ShadowMemoryPageMap[addr].Paged != 0){
+      if (ShadowMemoryPageMap[addr].Written != 0 || ShadowMemoryPageMap[addr].Paged != 0) {
 	int x = 0;
-	while(x < 0x100){
+	while (x < 0x100) {
 	  fprintf(output,"[0x%.7x/0%.9o] CDR %o DTP %.2o PTR 0x%.7x/0%.9o\n",
 		  Page.raw+x,Page.raw+x,ShadowMemory[Page.raw+x].cdr,ShadowMemory[Page.raw+x].dtp,
 		  ShadowMemory[Page.raw+x].ptr,ShadowMemory[Page.raw+x].ptr);
@@ -696,20 +696,20 @@ void lambda_dump(int opts){
     fclose(output);
   }
 #endif
-  if(!(opts&DUMP_NO_INC_SEQ)){ dump_seq++; }
+  if (!(opts&DUMP_NO_INC_SEQ)) { dump_seq++; }
 }
 
 // Make a point where we can stop gdb without relying on a gdb conditional breakpoint, which involves a huge performance hit
-void foo_hit(){
+void foo_hit() {
   printf("*** STOP GDB ***\n");
 }
 
-void sdu_cons_init(){
+void sdu_cons_init() {
   struct sockaddr_in sdu_addr;
 
   // Open socket
   sdu_fd = socket(AF_INET, SOCK_STREAM, 0);
-  if(sdu_fd < 0){
+  if (sdu_fd < 0) {
     perror("sdu_cons_init(): socket()");
     sdu_fd = -1;
     return;
@@ -718,13 +718,13 @@ void sdu_cons_init(){
   int flags;
   // Become reusable
   flags = 1;
-  if(setsockopt(sdu_fd,SOL_SOCKET,SO_REUSEADDR,&flags,sizeof(flags)) < 0){
+  if (setsockopt(sdu_fd,SOL_SOCKET,SO_REUSEADDR,&flags,sizeof(flags)) < 0) {
     perror("sdu_fd:setsockopt()");
   }
 
   // Become nonblocking
   flags = fcntl(sdu_fd,F_GETFL,0);
-  if(flags < 0){ flags = 0; }
+  if (flags < 0) { flags = 0; }
   fcntl(sdu_fd,F_SETFL,flags|O_NONBLOCK);
 
   // Clobber and setup socket
@@ -734,7 +734,7 @@ void sdu_cons_init(){
   sdu_addr.sin_port = htons(3637);
 
   // Bind
-  if(bind(sdu_fd,(struct sockaddr *)&sdu_addr,sizeof(sdu_addr)) < 0){
+  if (bind(sdu_fd,(struct sockaddr *)&sdu_addr,sizeof(sdu_addr)) < 0) {
     perror("sdu_cons_init(): bind()");
     close(sdu_fd);
     sdu_fd = -1;
@@ -750,17 +750,17 @@ void sdu_cons_init(){
 }
 
 // SDU console plumbing
-void sdu_cons_clockpulse(){
+void sdu_cons_clockpulse() {
   ssize_t res = 0;
   struct sockaddr_in other_addr;
   socklen_t socklen = sizeof(other_addr);
-  if(sdu_fd < 0){ return; }
-  if(sdu_conn_fd < 0){
+  if (sdu_fd < 0) { return; }
+  if (sdu_conn_fd < 0) {
     int flags;
     // Is anybody out there?
     sdu_conn_fd = accept(sdu_fd,(struct sockaddr *)&other_addr,&socklen);
-    if(sdu_conn_fd < 0){
-      if(errno != EAGAIN && errno != EWOULDBLOCK){
+    if (sdu_conn_fd < 0) {
+      if (errno != EAGAIN && errno != EWOULDBLOCK) {
 	perror("debug:accept()");
 	close(sdu_fd);
 	sdu_fd = -1;
@@ -781,59 +781,59 @@ void sdu_cons_clockpulse(){
     sdu_rx_buf[7] = 252; // WON'T
     sdu_rx_buf[8] = 34;  // LINEMODE
     res = write(sdu_conn_fd,sdu_rx_buf,9);
-    if(res < 0){
+    if (res < 0) {
       perror("sdu_cons_clockpulse:write()");
     }
     bzero(sdu_rx_buf,9);
     // Become nonblocking
     flags = fcntl(sdu_conn_fd,F_GETFL,0);
-    if(flags < 0){ flags = 0; }
+    if (flags < 0) { flags = 0; }
     fcntl(sdu_conn_fd,F_SETFL,flags|O_NONBLOCK);
     return;
-  }else{
+  } else {
     res = read(sdu_conn_fd,sdu_rx_buf+sdu_rx_ptr,1);
-    if(res < 0){
-      if(errno != EAGAIN && errno != EWOULDBLOCK){
+    if (res < 0) {
+      if (errno != EAGAIN && errno != EWOULDBLOCK) {
         perror("sducons:read()");
         close(sdu_conn_fd);
         sdu_conn_fd = -1;
       }
       return;
     }
-    if(res == 0){ return; } // What?
-    if(res != 1){
+    if (res == 0) { return; } // What?
+    if (res != 1) {
       printf("SDUCONS: BAD PACKET? Got %d bytes\n",(int)res);
       return;
-    }else{
+    } else {
       // Got a byte
       printf("SDUCONS: IO: 0x%x\n",sdu_rx_buf[sdu_rx_ptr]);
-      if(sdu_tcmd_state > 0){
+      if (sdu_tcmd_state > 0) {
 	printf("SDUCONS: TCMD %d\n",sdu_rx_buf[sdu_rx_ptr]);
-	if(sdu_rx_buf[sdu_rx_ptr] == 0xFF){
+	if (sdu_rx_buf[sdu_rx_ptr] == 0xFF) {
 	  // Quoted IAC
 	  sdu_rx_ptr++;
           sducons_rx_int();
 	  sdu_tcmd_state = 0;
-	}else{
+	} else {
 	  // Something else, eat the next two bytes
 	  sdu_rx_buf[sdu_rx_ptr] = 0;
 	  sdu_tcmd_state++;
-	  if(sdu_tcmd_state == 3){
+	  if (sdu_tcmd_state == 3) {
 	    sdu_tcmd_state = 0;
 	  }
 	}
-      }else{
-	if(sdu_rx_buf[sdu_rx_ptr] == 0xFF){ // Did we get IAC?
+      } else {
+	if (sdu_rx_buf[sdu_rx_ptr] == 0xFF) { // Did we get IAC?
 	  // Yes
 	  sdu_tcmd_state = 1; sdu_rx_buf[sdu_rx_ptr] = 0;
 	  printf("SDUCONS: IAC\n");
-	}else{
+	} else {
 	  // Is it a CR?
-	  if(sdu_rx_buf[sdu_rx_ptr] == 0x0D){
+	  if (sdu_rx_buf[sdu_rx_ptr] == 0x0D) {
 	    sdu_rx_buf[sdu_rx_ptr] = 0x0A; // Make it a LF instead
 	  }
 	  // Is it a null?
-	  if(sdu_rx_buf[sdu_rx_ptr] != 0x00){
+	  if (sdu_rx_buf[sdu_rx_ptr] != 0x00) {
 	    // No, tell the SDU
 	    sdu_rx_ptr++;
 	    sducons_rx_int();
@@ -844,35 +844,35 @@ void sdu_cons_clockpulse(){
   }
 }
 
-void sducons_write(char data){
+void sducons_write(char data) {
   ssize_t res = 0;
   uint8_t tx_buf[2] = { 0,0 };
-  if(sdu_conn_fd < 0){ return; }
+  if (sdu_conn_fd < 0) { return; }
   tx_buf[0] = data;
   res = write(sdu_conn_fd,tx_buf,1);
-  if(res < 0){
+  if (res < 0) {
     perror("sducons_write:write()");
   }
 }
 
 #ifdef BURR_BROWN
 // Debug interface initialization
-void debug_init(){
+void debug_init() {
   struct sockaddr_in debug_addr;
 
   // Open debug socket
   debug_fd = socket(AF_INET, SOCK_STREAM, 0);
-  if(debug_fd < 0){
+  if (debug_fd < 0) {
     perror("debug_init(): socket()");
     debug_fd = -1;
     return;
   }
 
-  if(debug_target_mode != 0){
+  if (debug_target_mode != 0) {
     int flags;
     // Become nonblocking
     flags = fcntl(debug_fd,F_GETFL,0);
-    if(flags < 0){ flags = 0; }
+    if (flags < 0) { flags = 0; }
     fcntl(debug_fd,F_SETFL,flags|O_NONBLOCK);
 
     // Clobber and setup socket
@@ -882,7 +882,7 @@ void debug_init(){
     debug_addr.sin_port = htons(3636);
 
     // Bind
-    if(bind(debug_fd,(struct sockaddr *)&debug_addr,sizeof(debug_addr)) < 0){
+    if (bind(debug_fd,(struct sockaddr *)&debug_addr,sizeof(debug_addr)) < 0) {
       perror("debug_init(): bind()");
       close(debug_fd);
       debug_fd = -1;
@@ -898,14 +898,14 @@ void debug_init(){
 }
 
 // Debug interface: Connect to other side
-void debug_connect(){
+void debug_connect() {
   struct hostent *target;
   struct sockaddr_in target_addr;
-  if(debug_fd < 0){ return; }
-  if(debug_conn_fd > 0){ return; } // Already connected!
+  if (debug_fd < 0) { return; }
+  if (debug_conn_fd > 0) { return; } // Already connected!
 
   target = gethostbyname(debug_target_host);
-  if(target == NULL){
+  if (target == NULL) {
     perror("debug_connect(): gethostbyname()");
     return;
   }
@@ -915,26 +915,26 @@ void debug_connect(){
 	(char *)&target_addr.sin_addr.s_addr,
 	target->h_length);
   target_addr.sin_port = htons(3636);
-  if(connect(debug_fd,(struct sockaddr *)&target_addr,sizeof(target_addr)) < 0){
+  if (connect(debug_fd,(struct sockaddr *)&target_addr,sizeof(target_addr)) < 0) {
     perror("debug_connect()");
-  }else{
+  } else {
     int flags;
     debug_conn_fd = debug_fd;
     // Become nonblocking
     flags = fcntl(debug_fd,F_GETFL,0);
-    if(flags < 0){ flags = 0; }
+    if (flags < 0) { flags = 0; }
     fcntl(debug_fd,F_SETFL,flags|O_NONBLOCK);
   }
 }
 
 // Debug interface: send request
-void debug_tx_rq(uint8_t rq,uint32_t addr,uint32_t data){
+void debug_tx_rq(uint8_t rq,uint32_t addr,uint32_t data) {
   extern uint8_t BB_Remote_Result;
   ssize_t res = 0;
   nuData tmp;
   uint8_t tx_buf[64];
-  if(debug_fd < 0){ return; }
-  if(debug_conn_fd < 0){ return; }
+  if (debug_fd < 0) { return; }
+  if (debug_conn_fd < 0) { return; }
   // printf("DEBUG: Sending 0x%.2X Addr 0x%.8X Data 0x%.8X\n",rq,addr,data);
   BB_Remote_Result = 1; // Hold for result on read
   debug_last_addr = addr;
@@ -951,24 +951,24 @@ void debug_tx_rq(uint8_t rq,uint32_t addr,uint32_t data){
   tx_buf[7] = tmp.byte[2];
   tx_buf[8] = tmp.byte[3];
   res = write(debug_conn_fd,tx_buf,9);
-  if(res < 0){
+  if (res < 0) {
     perror("debug:write()");
   }
 }
 
 // Debug interface maintenance
-void debug_clockpulse(){
+void debug_clockpulse() {
   extern uint8_t BB_Remote_Result;
   ssize_t res = 0;
   struct sockaddr_in other_addr;
   socklen_t socklen = sizeof(other_addr);
-  if(debug_fd < 0){ return; }
-  if(debug_conn_fd < 0){
-    if(debug_target_mode != 0){
+  if (debug_fd < 0) { return; }
+  if (debug_conn_fd < 0) {
+    if (debug_target_mode != 0) {
       // Is anybody out there?
       debug_conn_fd = accept(debug_fd,(struct sockaddr *)&other_addr,&socklen);
-      if(debug_conn_fd < 0){
-	if(errno != EAGAIN && errno != EWOULDBLOCK){
+      if (debug_conn_fd < 0) {
+	if (errno != EAGAIN && errno != EWOULDBLOCK) {
 	  perror("debug:accept()");
 	  close(debug_fd);
 	  debug_fd = -1;
@@ -982,11 +982,11 @@ void debug_clockpulse(){
     }
     return;
   }
-  switch(debug_io_state){
+  switch(debug_io_state) {
   case 0: // Nothing
     res = read(debug_conn_fd,debug_rx_buf,64);
-    if(res < 0){
-      if(errno != EAGAIN && errno != EWOULDBLOCK){
+    if (res < 0) {
+      if (errno != EAGAIN && errno != EWOULDBLOCK) {
 	perror("debug:read()");
 	close(debug_conn_fd);
 	debug_conn_fd = -1;
@@ -994,14 +994,14 @@ void debug_clockpulse(){
       }
       return;
     }
-    if(res == 0){ return; } // What?
-    if(res != 9){
+    if (res == 0) { return; } // What?
+    if (res != 9) {
       printf("DEBUG: BAD PACKET? Got %d bytes\n",(int)res);
       // printf("BAD PACKET?\n");
       return;
     }
     // If we are the master, this is our ack/result
-    if(debug_master_mode == 1){
+    if (debug_master_mode == 1) {
       // Take it
       extern nuAddr BB_Remote_Addr;
       extern nuData BB_Remote_Data;
@@ -1009,24 +1009,24 @@ void debug_clockpulse(){
       ack_addr <<= 8; ack_addr |= debug_rx_buf[3];
       ack_addr <<= 8; ack_addr |= debug_rx_buf[2];
       ack_addr <<= 8; ack_addr |= debug_rx_buf[1];
-      if(ack_addr == debug_last_addr){
+      if (ack_addr == debug_last_addr) {
 	BB_Remote_Addr.raw = ack_addr;
 	BB_Remote_Data.byte[0] = debug_rx_buf[5];
 	BB_Remote_Data.byte[1] = debug_rx_buf[6];
 	BB_Remote_Data.byte[2] = debug_rx_buf[7];
 	BB_Remote_Data.byte[3] = debug_rx_buf[8];
-	if(debug_rx_buf[0] == 0xFF){ BB_Remote_Result = 3; }else{ BB_Remote_Result = 2; }
+	if (debug_rx_buf[0] == 0xFF) { BB_Remote_Result = 3; } else { BB_Remote_Result = 2; }
 	// printf("DEBUG: Got ack 0x%.2X Addr 0x%.8X Data 0x%.8X\n",debug_rx_buf[0],BB_Remote_Addr.raw,BB_Remote_Data.word);
-      }else{
+      } else {
 	printf("DEBUG: Got out-of-order ack 0x%.2X Addr 0x%.8X Data 0x%.8X\n",debug_rx_buf[0],ack_addr,BB_Remote_Data.word);
       }
       debug_io_state = 0;
       return;
     }
     // Otherwise get the request
-    if(debug_rx_buf[0]&0x08){
+    if (debug_rx_buf[0]&0x08) {
       uint8_t Command = debug_rx_buf[0]&0x07;
-      switch(Command){
+      switch(Command) {
       case 0: // DIE
 	printf("DEBUG: Remote requested termination\n");
 	ld_die_rq = 1;
@@ -1039,7 +1039,7 @@ void debug_clockpulse(){
     // Fall into...
   case 1: // New incoming request
     // Await bus
-    if(NUbus_Busy != 0){ return; }
+    if (NUbus_Busy != 0) { return; }
     debug_io_state++;
   case 2: // Issue request
     {
@@ -1058,17 +1058,17 @@ void debug_clockpulse(){
     }
     debug_io_state++;
   case 3: // Await completion
-    if(NUbus_error != 0){
+    if (NUbus_error != 0) {
       // Error
       debug_rx_buf[0] = 0xFF; // Error marker
     }
-    if(NUbus_master == 0xF0 && NUbus_acknowledge == 1){
+    if (NUbus_master == 0xF0 && NUbus_acknowledge == 1) {
       // This is our answer, tell the master
       debug_tx_rq(debug_rx_buf[0],NUbus_Address.raw,NUbus_Data.word);
       debug_io_state = 0; // Ready for next packet
-    }else{
+    } else {
       // Bus still busy?
-      if(NUbus_Busy == 0){
+      if (NUbus_Busy == 0) {
 	// No, our transaction failed
 	printf("DEBUG: BUS TIMEOUT while handing RQ 0x%.2X Addr 0x%.8X Data 0x%.8X\n",NUbus_Request,NUbus_Address.raw,NUbus_Data.word);
 	// printf("DEBUG: BUS TIMEOUT?\n");
@@ -1087,31 +1087,31 @@ void audio_control(int onoff) {
   static int state = 0;
   static uint64_t toggle_time = 0;
 
-  if(onoff == state){
+  if (onoff == state) {
     return;
   }
   // this value seems to "work" for single beeps, and multiple beeps (around 4)
   // with default values for TV:BEEP-WAVELENGTH and TV:BEEP-DURATION,
-  if(onoff && (real_time > (toggle_time + 1))){
+  if (onoff && (real_time > (toggle_time + 1))) {
     printf("\aBEEP\n");
     toggle_time = real_time;
   }
   state = onoff;
 }
 
-void parse_config_line(char *line){
+void parse_config_line(char *line) {
   char *tok = NULL;
   tok = strtok(line," \t\r\n");
-  if(tok == NULL){ return; }
-  if(tok[0] == '#' || tok[0] == ';'){ return; } // Comment
-  if(strcasecmp(tok,"ether_addr") == 0){
+  if (tok == NULL) { return; }
+  if (tok[0] == '#' || tok[0] == ';') { return; } // Comment
+  if (strcasecmp(tok,"ether_addr") == 0) {
     // 3Com Ethernet address
     int x = 0;
     extern unsigned char ether_addr[6];
-    while(x < 6){
+    while (x < 6) {
       long int val = 0;
       tok = strtok(NULL," :\t\r\n");
-      if(tok != NULL){
+      if (tok != NULL) {
 	val = strtol(tok,NULL,16);
       }
       ether_addr[x] = val;
@@ -1120,24 +1120,24 @@ void parse_config_line(char *line){
     printf("Using 3Com Ethernet address %.2X:%.2X:%.2X:%.2X:%.2X:%.2X\n",
 	   ether_addr[0],ether_addr[1],ether_addr[2],ether_addr[3],ether_addr[4],ether_addr[5]);
   }
-  if(strcasecmp(tok,"ether_iface") == 0){
+  if (strcasecmp(tok,"ether_iface") == 0) {
     extern char ether_iface[30];
     // 3Com Ethernet interface
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       strncpy(ether_iface,tok,30);
       printf("Using 3Com Ethernet interface %s\n",ether_iface);
     }
   }
-  if(strcasecmp(tok,"disk") == 0){
+  if (strcasecmp(tok,"disk") == 0) {
     // Disk FN
     int dsk = 0;
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = atoi(tok);
       dsk = val;
       tok = strtok(NULL," \t\r\n");
-      if(tok != NULL){
+      if (tok != NULL) {
 	extern char disk_fn[4][64];
 	strncpy(disk_fn[dsk],tok,64);
 	printf("Using disk image %s for unit %d\n",tok,dsk);
@@ -1145,59 +1145,59 @@ void parse_config_line(char *line){
     }
   }
   /*
-  if(strcasecmp(tok,"disk_sph") == 0){
+  if (strcasecmp(tok,"disk_sph") == 0) {
     // Disk geometry - sectors per head
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = atoi(tok);
       disk_geometry_sph = val;
       printf("Using %d sectors per head\n",disk_geometry_sph);
     }
   }
-  if(strcasecmp(tok,"disk_spc") == 0){
+  if (strcasecmp(tok,"disk_spc") == 0) {
     // Disk geometry - sectors per cylinder
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = atoi(tok);
       disk_geometry_spc = val;
       printf("Using %d sectors per cylinder\n",disk_geometry_spc);
     }
   }
   */
-  if(strcasecmp(tok,"sdu_switch") == 0){
+  if (strcasecmp(tok,"sdu_switch") == 0) {
     // SDU rotary switch position
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = atoi(tok);
       sdu_rotary_switch = val;
       printf("SDU switch setting %d\n",sdu_rotary_switch);
     }
   }
 #ifdef BURR_BROWN
-  if(strcasecmp(tok,"debug_target_mode") == 0){
+  if (strcasecmp(tok,"debug_target_mode") == 0) {
     // Debug Target Mode
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = atoi(tok);
       debug_target_mode = val;
       printf("Using Debug Target Mode %d\n",debug_target_mode);
     }
   }
-  if(strcasecmp(tok,"debug_target_host") == 0){
+  if (strcasecmp(tok,"debug_target_host") == 0) {
     // Debug Target Hostname
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       strncpy(debug_target_host,tok,128);
       printf("Using Debug Target Hostname %s\n",debug_target_host);
     }
   }
 #endif
-  if(strcasecmp(tok,"mouse_mode") == 0){
+  if (strcasecmp(tok,"mouse_mode") == 0) {
     // Mouse Operation Mode
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = atoi(tok);
-      switch(val){
+      switch(val) {
       case 1: // Shared
 	mouse_op_mode = 1;
 	printf("Using Shared mode for mouse interface\r\n");
@@ -1211,80 +1211,80 @@ void parse_config_line(char *line){
     }
   }
   // Mouse A-memory locations
-  if(strcasecmp(tok,"mouse_x_loc_0") == 0){
+  if (strcasecmp(tok,"mouse_x_loc_0") == 0) {
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = strtol(tok,NULL,8);
       mouse_x_loc[0] = val;
       printf("Using A-%o for CP 0 Mouse X\n",mouse_x_loc[0]);
     }
   }
-  if(strcasecmp(tok,"mouse_x_loc_1") == 0){
+  if (strcasecmp(tok,"mouse_x_loc_1") == 0) {
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = strtol(tok,NULL,8);
       mouse_x_loc[1] = val;
       printf("Using A-%o for CP 1 Mouse X\n",mouse_x_loc[1]);
     }
   }
-  if(strcasecmp(tok,"mouse_y_loc_0") == 0){
+  if (strcasecmp(tok,"mouse_y_loc_0") == 0) {
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = strtol(tok,NULL,8);
       mouse_y_loc[0] = val;
       printf("Using A-%o for CP 0 Mouse Y\n",mouse_y_loc[0]);
     }
   }
-  if(strcasecmp(tok,"mouse_y_loc_1") == 0){
+  if (strcasecmp(tok,"mouse_y_loc_1") == 0) {
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = strtol(tok,NULL,8);
       mouse_y_loc[1] = val;
       printf("Using A-%o for CP 1 Mouse Y\n",mouse_y_loc[1]);
     }
   }
-  if(strcasecmp(tok,"mouse_wake_loc_0") == 0){
+  if (strcasecmp(tok,"mouse_wake_loc_0") == 0) {
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = strtol(tok,NULL,8);
       mouse_wake_loc[0] = val;
       printf("Using A-%o for CP 0 Mouse Wake\n",mouse_wake_loc[0]);
     }
   }
-  if(strcasecmp(tok,"mouse_wake_loc_1") == 0){
+  if (strcasecmp(tok,"mouse_wake_loc_1") == 0) {
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int val = strtol(tok,NULL,8);
       mouse_wake_loc[1] = val;
       printf("Using A-%o for CP 1 Mouse Wake\n",mouse_wake_loc[1]);
     }
   }
-  if(strcasecmp(tok,"pixel_on") == 0){
+  if (strcasecmp(tok,"pixel_on") == 0) {
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       uint32_t sval = strtol(tok,(char **)NULL, 16);
       pixel_on = sval;
       printf("pixel_on set to 0x%X\n", pixel_on);
     }
   }
-  if(strcasecmp(tok,"pixel_off") == 0){
+  if (strcasecmp(tok,"pixel_off") == 0) {
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       uint32_t sval = strtol(tok,(char **)NULL, 16);
       pixel_off = sval;
       printf("pixel_off (%s) set to 0x%X\n", tok, pixel_off);
     }
   }
-  if(strcasecmp(tok,"sdl_quit") == 0){
+  if (strcasecmp(tok,"sdl_quit") == 0) {
     // Turn off handling of SDL_QUIT event (caused by e.g. Command-Q on a Mac)
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
-      if((strcasecmp(tok,"on") == 0) || (strcasecmp(tok,"yes") == 0) || (strcasecmp(tok,"true") == 0)){
+    if (tok != NULL) {
+      if ((strcasecmp(tok,"on") == 0) || (strcasecmp(tok,"yes") == 0) || (strcasecmp(tok,"true") == 0)) {
         quit_on_sdl_quit = 1;
-      }else{
-	if((strcasecmp(tok,"off") == 0) || (strcasecmp(tok,"no") == 0) || (strcasecmp(tok,"false") == 0)){
+      } else {
+	if ((strcasecmp(tok,"off") == 0) || (strcasecmp(tok,"no") == 0) || (strcasecmp(tok,"false") == 0)) {
 	  quit_on_sdl_quit = 0;
-	}else{
+	} else {
 	  printf("sdl_quit: unrecognized value '%s' (on/true/yes, off/false/no)\n", tok);
 	}
       }
@@ -1292,17 +1292,17 @@ void parse_config_line(char *line){
     return;
   }
 
-  if(strcasecmp(tok,"map_key") == 0){
+  if (strcasecmp(tok,"map_key") == 0) {
     // Alter keyboard map
     tok = strtok(NULL," \t\r\n");
-    if(tok != NULL){
+    if (tok != NULL) {
       int sval = atoi(tok);
       tok = strtok(NULL," \t\r\n");
-      if(tok != NULL){
+      if (tok != NULL) {
 	int dval = strtol(tok,NULL,8);
 	map[sval] = dval;
 	// Assign modifier bits
-	switch(dval){
+	switch(dval) {
 	case 0003: // Mode Lock
 	  modmap[sval] = KB_BB_MODELOCK; break;
 	case 0005: // Left Super
@@ -1340,10 +1340,10 @@ void parse_config_line(char *line){
 	  break;
 	}
 	printf("Mapped SDL keycode %d to Lambda keycode 0%o\n",sval,dval);
-      }else{
+      } else {
 	printf("key_map: Missing octal Lambda key code.\n");
       }
-    }else{
+    } else {
       printf("key_map: Missing decimal SDL keycode value\n");
     }
   }
@@ -1356,13 +1356,13 @@ int bcount = 0; // Bus Cycle Counter
 int icount=0; // Main cycle counter
 
 // The Lambda and nubus are run at 5 MHz.
-void nubus_cycle(int sdu){
-  if(bcount == 5){
+void nubus_cycle(int sdu) {
+  if (bcount == 5) {
     // Update microsecond clock if that's enabled (NB: AUX stat only!)
-    if(pS[0].RG_Mode.Aux_Stat_Count_Control == 6){
+    if (pS[0].RG_Mode.Aux_Stat_Count_Control == 6) {
       pS[0].stat_counter_aux++;
     }
-    if(pS[1].RG_Mode.Aux_Stat_Count_Control == 6){
+    if (pS[1].RG_Mode.Aux_Stat_Count_Control == 6) {
       pS[1].stat_counter_aux++;
     }
     bcount = 0;
@@ -1374,7 +1374,7 @@ void nubus_cycle(int sdu){
 #endif
   // Other devices go here
   sdu_clock_pulse();
-  if(sdu == 0){
+  if (sdu == 0) {
     smd_clock_pulse();
     tapemaster_clock_pulse();
     enet_clock_pulse();
@@ -1397,38 +1397,33 @@ int lam_main(int argc, char *argv[]) {
   keyboard_io_ring_bottom[0] = keyboard_io_ring_bottom[1] = 0;
   mouse_io_ring_top[0] = mouse_io_ring_top[1] = 0;
   mouse_io_ring_bottom[0] = mouse_io_ring_bottom[1] = 0;
-
   printf("LambdaDelta\n");
-
   init_sdl_keyboard();
-
-
   // Obtain configuration
   config = fopen("ld.conf","r");
-  if(!config){
+  if (!config) {
     printf("Can't open ld.conf\n");
-  }else{
-    while(!feof(config)){
+  } else {
+    while (!feof(config)) {
       char buf[128];
       char *ret = NULL;
       ret = fgets(buf,128,config);
-      if(ret != NULL){
+      if (ret != NULL) {
 	parse_config_line(buf);
       }
     }
   }
-
   // Handle command-line options
-  if(argc > 1){
+  if (argc > 1) {
     int x = 1;
-    while(x < argc){
+    while (x < argc) {
 #ifdef BURR_BROWN
-      if(strcmp("-d",argv[x]) == 0){
+      if (strcmp("-d",argv[x]) == 0) {
 	debug_target_mode = 10;
 	printf("DEBUG TARGET MODE 10\n");
       }
 #endif
-      if(strcmp("-?",argv[x]) == 0){
+      if (strcmp("-?",argv[x]) == 0) {
         printf("\nUsage: ld [OPTIONS]\n");
         printf("Valid options:\n");
 #ifdef BURR_BROWN
@@ -1440,98 +1435,91 @@ int lam_main(int argc, char *argv[]) {
       x++;
     }
   }
-
-  if(smd_init() < 0){
+  if (smd_init() < 0) {
     exit(-1);
   }
   tapemaster_init();
-
   read_sym_files();
-
-  if(sdu_rotary_switch != 1){
+  if (sdu_rotary_switch != 1) {
     sdu_cons_init();
   }
-
 #ifdef BURR_BROWN
   // Debug init
   debug_init();
-
   // Ethernet initialization
   /* OBSOLETED WHEN 3COM SPLIT
-  if(debug_target_mode < 10){
+  if (debug_target_mode < 10) {
     ether_fd = enet_init();
-    if(ether_fd < 0){
+    if (ether_fd < 0) {
       perror("enet_init()");
       ether_fd = -1;
     }
   }
   */
-
   // SDL display initialization
-  if(debug_target_mode < 10){
-    sdl_init(VIDEO_WIDTH,VIDEO_HEIGHT);
+  if (debug_target_mode < 10) {
+    sdl_init(VIDEO_WIDTH, VIDEO_HEIGHT);
   }
-
   hw_init();
-
-  if(debug_target_mode > 9){
+  if (debug_target_mode > 9) {
     extern int SDU_state;
     printf("CLOCK STOPPED\n");
-    SDU_state = -1; // Stop SDU from IPLing machine
-    pS[0].cpu_die_rq = 1; // Stop clock
-    pS[1].cpu_die_rq = 1; // Stop clock
+    // Stop SDU from IPLing machine
+    SDU_state = -1;
+    // Stop clock
+    pS[0].cpu_die_rq = 1;
+    // Stop clock
+    pS[1].cpu_die_rq = 1;
   }
 #else
   // Ethernet initialization
   /*
   ether_fd = enet_init();
-  if(ether_fd < 0){
+  if (ether_fd < 0) {
     perror("enet_init()");
     ether_fd = -1;
   }
   */
-
   // SDL display initialization
-  sdl_init(VIDEO_WIDTH,VIDEO_HEIGHT);
-
+  sdl_init(VIDEO_WIDTH, VIDEO_HEIGHT);
   hw_init();
 #endif
-
   // Read in NVRAM
   read_nvram();
   // And RTC NVRAM
   read_rtc_nvram();
-
   // Read in ROMs
   read_sdu_rom();
   read_vcmem_rom();
   read_mem_rom();
-
   // If the debug switch is on debug/install mode
-  if(sdu_rotary_switch == 0){
+  if (sdu_rotary_switch == 0) {
     // Wait here for telnet
-    while(sdu_conn_fd < 0){
+    while (sdu_conn_fd < 0) {
       sdu_cons_clockpulse();
       usleep(0);
     }
   }
-
-  while(ld_die_rq == 0){
+  while (ld_die_rq == 0) {
     // New loop
-    icount -= 500000; // Don't clobber extra cycles if they happened
+    // Don't clobber extra cycles if they happened
+    icount -= 500000;
     // Run for 1/10th of a second, or 100000 cycles
-    while(icount < 500000 && ld_die_rq == 0){
+    while (icount < 500000 && ld_die_rq == 0) {
       int x=0;
       // Lambda runs at 5 MHz, so it gets 5 cycles
-      while(x < 5 && ld_die_rq == 0){
+      while (x < 5 && ld_die_rq == 0) {
 #ifdef BURR_BROWN
 	// Clock debug interface
         debug_clockpulse();
 #endif
-	if(x == 0){
-	  // The 8088 does more than one cycle worth of work in one tick,
-	  // so we clock it here. 1 MIPS was as fast as an 8088 got.
-	  // NB: This will cause nubus cycles if the 8088 has to wait for the bus!
+	if (x == 0) {
+	  // The 8088 does more than one cycle worth of work in one
+	  // tick, so we clock it here. 1 MIPS was as fast as an 8088
+	  // got.
+	  //
+	  // NB: This will cause nubus cycles if the 8088 has to wait
+	  // for the bus!
 	  i8086_clockpulse();
 	}
 	// Step lambda and nubus (8088 might have already done this!)
@@ -1543,21 +1531,22 @@ int lam_main(int argc, char *argv[]) {
     // Redraw display and process input
     sdl_refresh();
     // Plumb SDU console
-    if(sdu_rotary_switch != 1){
+    if (sdu_rotary_switch != 1) {
       sdu_cons_clockpulse();
     }
     // Update status line
-    if(stat_time > 9){
+    if (stat_time > 9) {
       char statbuf[512];
       // Update status line
       extern char tape_fn[];
-      sprintf(statbuf,"LambdaDelta: VC %d | Tape: %s | ",active_console,tape_fn);
-      switch(cp_state[active_console]){
+      sprintf(statbuf, "LambdaDelta: VC %d | Tape: %s | ",
+	      active_console, tape_fn);
+      switch(cp_state[active_console]) {
       case 0:
 	// Cold (or under 8088 control!)
-	if(pS[active_console].cpu_die_rq){
+	if (pS[active_console].cpu_die_rq) {
 	  sprintf(statbuf,"%sCold Halted",statbuf);
-	}else{
+	} else {
 	  sprintf(statbuf,"%sCold Running",statbuf);
 	}
 	break;
@@ -1570,24 +1559,24 @@ int lam_main(int argc, char *argv[]) {
 	}
 	break;
       case 2: // Lisp Booting
-	if(pS[active_console].cpu_die_rq){
+	if (pS[active_console].cpu_die_rq) {
 	  sprintf(statbuf,"%sLisp Boot Halted",statbuf);
-	}else{
+	} else {
 	  sprintf(statbuf,"%sLisp Booting",statbuf);
 	}
 	break;
       case 3: // Lisp Running
-	if(pS[active_console].cpu_die_rq){
+	if (pS[active_console].cpu_die_rq) {
 	  sprintf(statbuf,"%sHalted",statbuf);
-	}else{
+	} else {
 	  sprintf(statbuf,"%sRunning",statbuf);
 	}
 	break;
       default: // ???
-	sprintf(statbuf,"%sUnknown State %d",statbuf,cp_state[active_console]);
+	sprintf(statbuf, "%sUnknown State %d", statbuf, cp_state[active_console]);
 	break;
       }
-      sprintf(statbuf,"%s | DT %ld",statbuf,(emu_time-real_time));
+      sprintf(statbuf,"%s | DT %ld", statbuf, (emu_time - real_time));
       set_caption(statbuf);
       stat_time = 0;
     }
@@ -1595,36 +1584,34 @@ int lam_main(int argc, char *argv[]) {
     emu_time++;
     // Timer won't wrap for many years, so we don't have to care about that
     // Are we ahead of real time?
-    if(emu_time > real_time){
+    if (emu_time > real_time) {
       // Yes, wait.
-      while(emu_time > real_time){
-	usleep(0); // Allow real time to pass
+      while (emu_time > real_time) {
+	// Allow real time to pass
+	usleep(1);
       }
     }
     // Otherwise loop
   }
-
   // Save framebuffer image
 #ifdef BURR_BROWN
-  if(debug_target_mode < 10){
+  if (debug_target_mode < 10) {
     FB_dump(0);
     FB_dump(1);
   }
-
   // Is there a debug target?
-  if(debug_conn_fd > 0){
+  if (debug_conn_fd > 0) {
     // Kill target, sorry target
-    debug_tx_rq(0x08,0,0);
+    debug_tx_rq(0x08, 0, 0);
     usleep(0);
   }
 #else
   FB_dump(0);
   FB_dump(1);
 #endif
-
   printf("Run completed\n");
   // sdl_cleanup() will write out NVRAM and terminate the process.
   // It will not return.
   sdl_cleanup();
-  return(0);
+  return 0;
 }

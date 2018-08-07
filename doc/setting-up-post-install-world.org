@@ -1,0 +1,156 @@
+
+
+
+
+* Setting Up Post Install World (LMI Lisp, Release 4)
+
+  After following this instruction in the the root README file of this
+  repo, you should have a fully configured basic Customer world.  You
+  will want to configue this in a way that preserves the base custome
+  configuration (in case you need access to it) and allows you to
+  connect to the ld environment via TCP/IP networking protocols.
+
+  Since you will be accessing the system using the limpm command
+  prompt (Lisp listener) you may find it convenient to have a lispm
+  manual handy.  The last[citation needed] version of the Chinual can
+  be found here,
+  http://www.bitsavers.org/pdf/mit/cadr/chinual_6thEd_Jan84/, and
+  roughly corresponds to LMI Lisp Release 4 & 5.  You may find it
+  convenient to download and concatenate the individually chaptered
+  pdfs together using a tool such as pdfmode.
+
+
+  
+** Steps to set up a costom site
+
+
+   1. Boot ld into the ordinary lisp environment, by (from the main
+      repo folder on the host) running ld
+
+      src/ld
+
+
+   
+   2. From the ld SDU propt, finish cold booting,
+
+      newboot -a
+
+   
+   3. Log into the ~lispm~ account, don't execute the initialization
+      file.
+
+      (login "lispm" "lm" t)
+
+   4. Copy the default customer site files to a new directory
+
+
+      (copy-directory "lama:l.customer-site;" "lama:l.my-site")
+
+      where lama:l.my-site is the target directory.  This command is
+      roughly equivelent to 
+
+      cp -r /l/customer-site /l/my-site
+
+      In the Unix world.  Keeping in mind that Unix typically requires
+      you to mount a host's file system before using performing
+      file-system operations on it, and by default the local host's
+      file-system is mounted at at root, ~/~
+
+   5. Edit your new site file, enabling the TCP/IP stack.
+
+
+      (ed "lama:my-site;hosts.text")
+      
+
+      and change the line 
+
+      HOST LAMBDA-A, CHAOS 3430, USER, LISPM,LISPM,[LAM-A, LAMA]
+
+      to
+
+      HOST LAMBDA-A, [INTERNET 100.0.0.10, CHAOS 3430], USER, LISPM,LISPM,[LAM-A, LAMA]
+
+      This assems you used the host sugested in the project README
+      when installing ld, and that you will to connect to your virtual
+      instance using the IP address 100.0.0.10 If that's not the case
+      adjust/create the appropriate record as needed.
+
+
+
+   6. Set your new site using translation file
+
+      Edit translation file, LAMA:L.MY-SITE;SYS.TRANSLATIONS, changing
+
+      #+BEGIN_SRC lisp :tangle no
+	((fs:set-logical-pathname-host "SYS"
+	  :physical-host "LAMA" ; the actual computer where the sources are stored.
+	  ;; A list of pairs, which match components of logical pathname and
+	  ;; translate them to physical pathnames.
+	  :translations '(("CHAOS;" "<L.CUSTOMER-SITE>")
+			  ("SITE;" "<L.CUSTOMER-SITE>")
+			  ("*;*;*;" "<L.*.*.*>")
+			  ("*;*;" "<L.*.*>")
+			  ("*;" "<L.*>")))
+      #+END_SRC
+
+      to
+
+      #+BEGIN_SRC lisp :tangle no
+	((fs:set-logical-pathname-host "SYS"
+	  :physical-host "LAMA" ; the actual computer where the sources are stored.
+	  ;; A list of pairs, which match components of logical pathname and
+	  ;; translate them to physical pathnames.
+	  :translations '(("CHAOS;" "<L.MY-SITE>")
+			  ("SITE;" "<L.MY-SITE>")
+			  ("*;*;*;" "<L.*.*.*>")
+			  ("*;*;" "<L.*.*>")
+			  ("*;" "<L.*>")))
+      #+END_SRC
+
+      Then load it
+
+
+      (load "LAMA:L.MY-SITE;SYS.TRANSLATIONS")
+
+
+   1. Now you can build and load the site
+
+      (make-system 'site :recompile :noconfirm()
+
+   2. And save the word
+
+      ;; to check which band to save to
+
+      (print-disk-label)
+
+      ;; and to save
+
+      (disk-save "LOD1")
+
+
+   1. Set the load band for the next time you log in
+
+      (set-current-band 1)
+
+   2. You should now be able to ping the ld: ping 100.0.0.10
+
+** 2x2 lambda
+
+   The purpose here is to set up a lambda envirornment suitable for
+   creating a cold load band.  Namely, one with two processors and two
+   disk units, on assigned to each processor
+
+
+   
+*** Give each unit a distict name
+
+
+    1) Boot into SUD
+
+    2) Execute
+
+       /tar/load
+
+    3) set file partition
+
+    4) copy file partition

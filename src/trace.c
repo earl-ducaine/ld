@@ -7,15 +7,15 @@
 
 
 // int debugging_enabled = global_debugging_sdu;
-int debugging_enabled = false;
+bool debugging_enabled = false;
 
-void trace_log(const char* message) {
+void __trace_log(const char* message) {
   if (debugging_enabled) {
     trace_log(message);
   }
 }
 
-void trace_log_1s(const char* message, char* s) {
+void __trace_log_1s(const char* message, char* s) {
   if (debugging_enabled) {
     // Sinner!
     char buf[4096] = {'\0'};
@@ -24,7 +24,7 @@ void trace_log_1s(const char* message, char* s) {
   }
 }
 
-void trace_log_1u(const char* message, unsigned i) {
+void __trace_log_1u(const char* message, unsigned i) {
   if (debugging_enabled) {
     // Sinner!
     char buf[4096] = {'\0'};
@@ -33,7 +33,7 @@ void trace_log_1u(const char* message, unsigned i) {
   }
 }
 
-void trace_log_2u(const char* message, unsigned i, unsigned j) {
+void __trace_log_2u(const char* message, unsigned i, unsigned j) {
   if (debugging_enabled) {
     // Sinner!
     char buf[4096] = {'\0'};
@@ -42,7 +42,7 @@ void trace_log_2u(const char* message, unsigned i, unsigned j) {
   }
 }
 
-void trace_log_3u(const char* message, unsigned i, unsigned j, unsigned k) {
+void __trace_log_3u(const char* message, unsigned i, unsigned j, unsigned k) {
   if (debugging_enabled) {
     // Sinner!
     char buf[4096] = {'\0'};
@@ -51,7 +51,7 @@ void trace_log_3u(const char* message, unsigned i, unsigned j, unsigned k) {
   }
 }
 
-void trace_log_4u(const char* message, unsigned i, unsigned j, unsigned k,
+void __trace_log_4u(const char* message, unsigned i, unsigned j, unsigned k,
 		 unsigned l) {
   if (debugging_enabled) {
     // Sinner!
@@ -61,7 +61,7 @@ void trace_log_4u(const char* message, unsigned i, unsigned j, unsigned k,
   }
 }
 
-void trace_log_5u(const char* message, unsigned i, unsigned j, unsigned k,
+void __trace_log_5u(const char* message, unsigned i, unsigned j, unsigned k,
 		 unsigned l, unsigned m) {
   if (debugging_enabled) {
     // Sinner!
@@ -71,7 +71,7 @@ void trace_log_5u(const char* message, unsigned i, unsigned j, unsigned k,
   }
 }
 
-void trace_log_6u(const char* message, unsigned i, unsigned j, unsigned k,
+void __trace_log_6u(const char* message, unsigned i, unsigned j, unsigned k,
 		 unsigned l, unsigned m, unsigned n) {
   if (debugging_enabled) {
     // Sinner!

@@ -2030,7 +2030,8 @@ void lambda_nubus_slave(int I) {
           uint32_t Word = pS[I].CSM_Adr.raw;
           Word >>= (8*NUbus_Address.Byte);
           NUbus_Data.byte[NUbus_Address.Byte] = Word&0xFF;
-          trace_i("RG: SPY: CSM.ADR Byte Read, data 0x%X\n",NUbus_Data.byte[NUbus_Address.Byte]);
+          trace_i("RG: SPY: CSM.ADR Byte Read, data 0x%X\n",
+		  NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
@@ -2165,7 +2166,10 @@ void lambda_nubus_slave(int I) {
           paddr <<= 4;
           paddr |= (addr&0xF);
           NUbus_Data.byte[NUbus_Address.Byte] = pS[I].WCS[paddr].byte[4+NUbus_Address.Byte];
-          printf("RG: SPY: HI CRAM Byte Read, addr 0x%X, paddr 0x%X, data 0x%X\n",pS[I].loc_ctr_reg.raw,paddr,NUbus_Data.byte[NUbus_Address.Byte]);
+          trace_log_3u("RG: SPY: HI CRAM Byte Read, addr 0x%X, paddr 0x%X, data 0x%X\n",
+		 pS[I].loc_ctr_reg.raw,
+		 paddr,
+		 NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
@@ -2177,7 +2181,10 @@ void lambda_nubus_slave(int I) {
           paddr <<= 4;
           paddr |= (addr&0xF);
           pS[I].WCS[paddr].word[0] = NUbus_Data.word;
-          printf("RG: SPY: LO CRAM Write, addr 0x%X, paddr 0x%X, data 0x%X\n",pS[I].loc_ctr_reg.raw,paddr,NUbus_Data.word);
+          trace_log_3u("RG: SPY: LO CRAM Write, addr 0x%X, paddr 0x%X, data 0x%X\n",
+		 pS[I].loc_ctr_reg.raw,
+		 paddr,
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2187,7 +2194,10 @@ void lambda_nubus_slave(int I) {
           paddr <<= 4;
           paddr |= (addr&0xF);
           NUbus_Data.word = pS[I].WCS[paddr].word[0];
-          printf("RG: SPY: LO CRAM Read, addr 0x%X, paddr 0x%X, data 0x%X\n",pS[I].loc_ctr_reg.raw,paddr,NUbus_Data.word);
+          trace_log_3u("RG: SPY: LO CRAM Read, addr 0x%X, paddr 0x%X, data 0x%X\n",
+		 pS[I].loc_ctr_reg.raw,
+		 paddr,
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2197,7 +2207,9 @@ void lambda_nubus_slave(int I) {
           paddr <<= 4;
           paddr |= (addr&0xF);
           pS[I].WCS[paddr].byte[NUbus_Address.Byte] = NUbus_Data.byte[NUbus_Address.Byte];
-          printf("RG: SPY: LO CRAM Byte Write, addr 0x%X, paddr 0x%X, data 0x%X\n",pS[I].loc_ctr_reg.raw,paddr,NUbus_Data.byte[NUbus_Address.Byte]);
+          trace_log_3u("RG: SPY: LO CRAM Byte Write, addr 0x%X, paddr 0x%X, data 0x%X\n",
+		 pS[I].loc_ctr_reg.raw,paddr,
+		 NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
@@ -2207,7 +2219,9 @@ void lambda_nubus_slave(int I) {
           paddr <<= 4;
           paddr |= (addr&0xF);
           NUbus_Data.byte[NUbus_Address.Byte] = pS[I].WCS[paddr].byte[NUbus_Address.Byte];
-          printf("RG: SPY: LO CRAM Byte Read, addr 0x%X, paddr 0x%X, data 0x%X\n",pS[I].loc_ctr_reg.raw,paddr,NUbus_Data.byte[NUbus_Address.Byte]);
+          trace_log_3u("RG: SPY: LO CRAM Byte Read, addr 0x%X, paddr 0x%X, data 0x%X\n",
+		 pS[I].loc_ctr_reg.raw,paddr,
+		 NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
@@ -2225,13 +2239,13 @@ void lambda_nubus_slave(int I) {
 	    Word |= Data;
 	  }
 	  pS[I].TRAM_Adr = Word;
-	  printf("RG: SPY: TRAM.ADR Write, data 0x%X\n",NUbus_Data.word);
+	  trace_log_1u("RG: SPY: TRAM.ADR Write, data 0x%X\n", NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_READ) {
           NUbus_Data.word = (pS[I].TRAM_Adr&0x0FFF);
-          printf("RG: SPY: TRAM.ADR Read, data 0x%X\n",NUbus_Data.word);
+          trace_log_1u("RG: SPY: TRAM.ADR Read, data 0x%X\n", NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2239,7 +2253,8 @@ void lambda_nubus_slave(int I) {
 	  uint32_t Word = (pS[I].TRAM_Adr&0x0FFF);
           Word >>= (8*NUbus_Address.Byte);
 	  NUbus_Data.byte[NUbus_Address.Byte] = Word&0xFF;
-          printf("RG: SPY: TRAM.ADR Byte Read, data 0x%X\n",NUbus_Data.byte[NUbus_Address.Byte]);
+          trace_log_1u("RG: SPY: TRAM.ADR Byte Read, data 0x%X\n",
+		 NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
@@ -2247,25 +2262,33 @@ void lambda_nubus_slave(int I) {
       case 011: // TRAM
         if (NUbus_Request == VM_WRITE) {
           pS[I].TRAM[pS[I].TRAM_Adr].word = NUbus_Data.word;
-          printf("RG: SPY: TRAM Write, addr 0x%X, data 0x%X\n",pS[I].TRAM_Adr,NUbus_Data.word);
+          trace_log_2u("RG: SPY: TRAM Write, addr 0x%X, data 0x%X\n",
+		 pS[I].TRAM_Adr,
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_BYTE_WRITE) {
           pS[I].TRAM[pS[I].TRAM_Adr].byte[NUbus_Address.Byte] = NUbus_Data.byte[NUbus_Address.Byte];
-	  printf("RG: SPY: TRAM Byte Write, addr 0x%X, data 0x%X\n",pS[I].TRAM_Adr,NUbus_Data.byte[NUbus_Address.Byte]);
+	  trace_log_2u("RG: SPY: TRAM Byte Write, addr 0x%X, data 0x%X\n",
+		 pS[I].TRAM_Adr,
+		 NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
         if (NUbus_Request == VM_READ) {
           NUbus_Data.word = pS[I].TRAM[pS[I].TRAM_Adr].word;
-	  printf("RG: SPY: TRAM Read, addr 0x%X, data 0x%X\n",pS[I].TRAM_Adr,NUbus_Data.word);
+	  trace_log_2u("RG: SPY: TRAM Read, addr 0x%X, data 0x%X\n",
+		 pS[I].TRAM_Adr,
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_BYTE_READ) {
           NUbus_Data.byte[NUbus_Address.Byte] = pS[I].TRAM[pS[I].TRAM_Adr].byte[NUbus_Address.Byte];
-	  printf("RG: SPY: TRAM Byte Read, addr 0x%X, data 0x%X\n",pS[I].TRAM_Adr,NUbus_Data.byte[NUbus_Address.Byte]);
+	  trace_log_2u("RG: SPY: TRAM Byte Read, addr 0x%X, data 0x%X\n",
+		 pS[I].TRAM_Adr,
+		 NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
@@ -2283,7 +2306,9 @@ void lambda_nubus_slave(int I) {
             Word |= Data;
           }
           pS[I].History_RAM[pS[I].History_Pointer&0xFFF] = Word;
-          printf("RG: SPY: HRAM Write, addr 0x%X, data 0x%X\n",pS[I].History_Pointer&0xFFF,NUbus_Data.word);
+          trace_log_2u("RG: SPY: HRAM Write, addr 0x%X, data 0x%X\n",
+		 pS[I].History_Pointer&0xFFF,
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2294,7 +2319,9 @@ void lambda_nubus_slave(int I) {
 	  } else {
 	    NUbus_Data.byte[NUbus_Address.Byte] = ((Word>>(8*NUbus_Address.Byte))&0xFF);
 	  }
-	  printf("RG: SPY: HRAM Read, addr 0x%X, data 0x%X\n",pS[I].History_Pointer&0xFFF,NUbus_Data.word);
+	  trace_log_2u("RG: SPY: HRAM Read, addr 0x%X, data 0x%X\n",
+		 pS[I].History_Pointer&0xFFF,
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2313,13 +2340,15 @@ void lambda_nubus_slave(int I) {
           }
 	  pS[I].History_Pointer = Word;
 	  pS[I].Next_History_Pointer = Word;
-	  printf("RG: SPY: HPTR Write, data 0x%X\n",NUbus_Data.word);
+	  trace_log_1u("RG: SPY: HPTR Write, data 0x%X\n",
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_READ) {
           NUbus_Data.word = (pS[I].History_Pointer&0x0FFF);
-          printf("RG: SPY: HPTR Read, data 0x%X\n",NUbus_Data.word);
+          trace_log_1u("RG: SPY: HPTR Read, data 0x%X\n",
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2327,20 +2356,21 @@ void lambda_nubus_slave(int I) {
 	  uint32_t Word = (pS[I].History_Pointer&0x0FFF);
           Word >>= (8*NUbus_Address.Byte);
 	  NUbus_Data.byte[NUbus_Address.Byte] = Word&0xFF;
-	  printf("RG: SPY: HPTR Byte Read, data 0x%X\n",NUbus_Data.byte[NUbus_Address.Byte]);
+	  trace_log_1u("RG: SPY: HPTR Byte Read, data 0x%X\n",
+		 NUbus_Data.byte[NUbus_Address.Byte]);
 	  NUbus_acknowledge=1;
 	  return;
 	}
 	break;
       case 014: // PC (read-only)
 	if (NUbus_Request == VM_WRITE) {
-          printf("RG: SPY: uPC Write, data discarded");
+          trace_log("RG: SPY: uPC Write, data discarded");
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_READ) {
 	  // If we have a pending PC, take that instead
-          printf("RG: SPY: uPC Read, ");
+          trace_log("RG: SPY: uPC Read, ");
 	  if (pS[I].loc_ctr_nxt != -1) {
 	    printf("Nxt");
 	    NUbus_Data.word = pS[I].loc_ctr_nxt;
@@ -2348,13 +2378,15 @@ void lambda_nubus_slave(int I) {
 	    printf("Reg");
 	    NUbus_Data.word = pS[I].loc_ctr_reg.raw;
 	  }
-	  printf(" = 0x%X (0%o)\n",NUbus_Data.word,NUbus_Data.word);
+	  printf(" = 0x%X (0%o)\n",
+		 NUbus_Data.word,
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_BYTE_READ) {
 	  uint32_t Word = 0;
-          printf("RG: SPY: uPC Byte Read, ");
+          trace_log("RG: SPY: uPC Byte Read, ");
           if (pS[I].loc_ctr_nxt != -1) {
             printf("Nxt");
             Word = pS[I].loc_ctr_nxt;
@@ -2373,13 +2405,14 @@ void lambda_nubus_slave(int I) {
       case 015: // TREG (Output register of TRAM, read-only)
         if (NUbus_Request == VM_READ) {
           NUbus_Data.word = pS[I].TREG.word;
-          printf("RG: SPY: TREG Read, data 0x%X\n",NUbus_Data.word);
+          trace_log_1u("RG: SPY: TREG Read, data 0x%X\n", NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_BYTE_READ) {
           NUbus_Data.byte[NUbus_Address.Byte] = pS[I].TREG.byte[NUbus_Address.Byte];
-          printf("RG: SPY: TREG Byte Read, data 0x%X\n",NUbus_Data.byte[NUbus_Address.Byte]);
+          trace_log_1u("RG: SPY: TREG Byte Read, data 0x%X\n",
+		 NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
@@ -2387,7 +2420,7 @@ void lambda_nubus_slave(int I) {
       case 016: // MFO ENABLE (reading MFO bus)
         if (NUbus_Request == VM_READ) {
           NUbus_Data.word = pS[I].MFObus;
-          printf("RG: SPY: MFO BUS Read, data 0x%X\n",NUbus_Data.word);
+          trace_log_1u("RG: SPY: MFO BUS Read, data 0x%X\n", NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2395,7 +2428,8 @@ void lambda_nubus_slave(int I) {
           uint32_t Word = pS[I].MFObus;
           Word >>= (8*NUbus_Address.Byte);
           NUbus_Data.byte[NUbus_Address.Byte] = Word&0xFF;
-          printf("RG: SPY: MFO BUS Byte Read, data 0x%X\n",NUbus_Data.byte[NUbus_Address.Byte]);
+          trace_log_1u("RG: SPY: MFO BUS Byte Read, data 0x%X\n",
+		       NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
@@ -2413,13 +2447,13 @@ void lambda_nubus_slave(int I) {
             Word |= Data;
           }
 	  pS[I].SPY_Register = Word;
-	  printf("RG: SPY: SPY REG Write, data 0x%X\n",NUbus_Data.word);
+	  trace_log_1u("RG: SPY: SPY REG Write, data 0x%X\n", NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_READ) {
           NUbus_Data.word = pS[I].SPY_Register;
-          printf("RG: SPY: SPY REG Read, data 0x%X\n",NUbus_Data.word);
+          trace_log_1u("RG: SPY: SPY REG Read, data 0x%X\n", NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2427,7 +2461,8 @@ void lambda_nubus_slave(int I) {
           uint32_t Word = pS[I].SPY_Register;
           Word >>= (8*NUbus_Address.Byte);
           NUbus_Data.byte[NUbus_Address.Byte] = Word&0xFF;
-          printf("RG: SPY: SPY REG Byte Read, data 0x%X\n",NUbus_Data.byte[NUbus_Address.Byte]);
+          trace_log_1u("RG: SPY: SPY REG Byte Read, data 0x%X\n",
+		 NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
@@ -2447,16 +2482,16 @@ void lambda_nubus_slave(int I) {
 	  }
 	  pS[I].PMR.raw = Word;
 	  pS[I].PMR.raw >>= 8;
-	  printf("RG: SPY: PMR Write, data 0x%X\n",Word);
+	  trace_log_1u("RG: SPY: PMR Write, data 0x%X\n", Word);
 	  NUbus_acknowledge = 1;
 	  // HANDLE BITS
 	  if (pS[I].PMR.Clear_NOP != 0) {
-	    printf("RG: PMR: Clear NOP\n");
+	    trace_log("RG: PMR: Clear NOP\n");
 	    pS[I].ConReg.nop = 0;
 	  }
 	  if (pS[I].PMR.Reset_Interrupt_Counter != 0) {
 	    int x=0;
-	    printf("RG: PMR: Reset Interrupt Counter\n");
+	    trace_log("RG: PMR: Reset Interrupt Counter\n");
 	    pS[I].InterruptPending = 0;
 	    while(x<0x100) {
 	      pS[I].InterruptStatus[x] = 0;
@@ -2466,13 +2501,13 @@ void lambda_nubus_slave(int I) {
 	  }
 	  if (pS[I].PMR.Force_T_Hold != 0) {
 	    if (oldPMR.Force_T_Hold == 0) {
-	      printf("RG: PMR: FORCE-T-HOLD SET\n");
+	      trace_log("RG: PMR: FORCE-T-HOLD SET\n");
 	      pS[I].exec_hold = true;
 	      pS[I].ConReg.t_hold_l = 0; // Holding
 	    }
 	  } else {
 	    if (oldPMR.Force_T_Hold != 0) {
-	      printf("RG: PMR: FORCE-T-HOLD CLEARED\n");
+	      trace_log("RG: PMR: FORCE-T-HOLD CLEARED\n");
 	      pS[I].exec_hold = false;
 	      pS[I].ConReg.t_hold_l = 1; // Not Holding
 	    }
@@ -2489,10 +2524,10 @@ void lambda_nubus_slave(int I) {
 	    if (pS[I].PMR.Allow_UInst_Clocks != 0) {
 	      if (pS[I].TRAM_PC == 03001) {
 		// This really happens at 03000, but since we just changed it if we stepped...
-		printf("RG %d: PMR: UINST CLOCK ENABLED\n",I);
+		trace_log_1u("RG %d: PMR: UINST CLOCK ENABLED\n",I);
 		// Dummy out the "just clearing the pipeline" SETZs here.
 		if (pS[I].Iregister.word[0] == 0x00000000 && pS[I].Iregister.word[1] == 0xF0000000) {
-		  printf("RG: PMR: Pipeline clearing detected, not stepping\n");
+		  trace_log_1u("RG: PMR: Pipeline clearing detected, not stepping\n");
 		  // Update PC.
 		  pS[I].loc_ctr_cnt = pS[I].loc_ctr_reg.raw; // Prepare to fetch next.
 		  // If AfterNEXT
@@ -2512,12 +2547,12 @@ void lambda_nubus_slave(int I) {
 		  // pS[I].microtrace = 1;
 		}
 	      } else {
-		printf("RG: PMR: UINST CLOCK ENABLED @ TRAM_ADR 0%o, WAITING FOR 3001\n",pS[I].TRAM_PC);
+		trace_log_1u("RG: PMR: UINST CLOCK ENABLED @ TRAM_ADR 0%o, WAITING FOR 3001\n",pS[I].TRAM_PC);
 		// printf(", UFETCH ARMED\n");
 	      }
 	    } else {
 	      pS[I].ConReg.uinst_clock_l = 1; // Not Uinst
-	      printf("RG %d: PMR: UINST CLOCK DISABLED\n",I);
+	      trace_log_1u("RG %d: PMR: UINST CLOCK DISABLED\n",I);
 	      pS[I].cpu_die_rq = 1;
 	    }
 	  }
@@ -2525,7 +2560,7 @@ void lambda_nubus_slave(int I) {
 	  // UInst Advance
 	  if (pS[I].PMR.Advance_UInst_Request != 0 && oldPMR.Advance_UInst_Request == 0) {
 	    // a transition from 0 to 1 causes a single uinst step, or tries to restart the lambda if it is in a halted state
-	    printf("RG %d: PMR: ADVANCE UINST REQUEST\n",I);
+	    trace_log_1u("RG: %d: PMR: ADVANCE UINST REQUEST\n", I);
 	    // pS[I].microtrace = 1;
 	    pS[I].cpu_die_rq = 0;
 	  }
@@ -2537,7 +2572,7 @@ void lambda_nubus_slave(int I) {
 	  NUbus_Data.word |= 0xFF;
 	  // Low 8 bits come from configuration PROM, but I don't know how to address it
 	  // Newboot seems to indicate they should be all Fs
-	  printf("RG: SPY: PMR Read, data 0x%X\n",NUbus_Data.word);
+	  trace_log_1u("RG: SPY: PMR Read, data 0x%X\n",NUbus_Data.word);
 	  NUbus_acknowledge = 1;
 	  return;
 	}
@@ -2545,7 +2580,7 @@ void lambda_nubus_slave(int I) {
 	  uint32_t Word = (((pS[I].PMR.raw&0x00FFFFFF)<<8)|0xFF);
 	  Word >>= (8*NUbus_Address.Byte);
 	  NUbus_Data.byte[NUbus_Address.Byte] = Word&0xFF;
-	  printf("RG: SPY: PMR Byte Read, data 0x%X\n",NUbus_Data.byte[NUbus_Address.Byte]);
+	  trace_log_1u("RG: SPY: PMR Byte Read, data 0x%X\n",NUbus_Data.byte[NUbus_Address.Byte]);
 	  NUbus_acknowledge=1;
 	  return;
 	}
@@ -2553,13 +2588,13 @@ void lambda_nubus_slave(int I) {
       case 021: // PARITY VECTOR
         if (NUbus_Request == VM_WRITE) {
           pS[I].Parity_Vector = NUbus_Data.word;
-          printf("RG: SPY: Parity Vector Write, data 0x%X\n",NUbus_Data.word);
+          trace_log_1u("RG: SPY: Parity Vector Write, data 0x%X\n",NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_READ) {
           NUbus_Data.word = pS[I].Parity_Vector;
-          printf("RG: SPY: Parity Vector Read, data 0x%X\n",NUbus_Data.word);
+          trace_log_1u("RG: SPY: Parity Vector Read, data 0x%X\n",NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2579,14 +2614,18 @@ void lambda_nubus_slave(int I) {
             Word |= Data;
           }
           pS[I].CRAM_map[map_addr] = Word;
-          printf("RG: SPY: CRAM ADR MAP Write, addr 0x%X, data 0x%X\n",pS[I].loc_ctr_reg.raw,NUbus_Data.word);
+          trace_log_2u("RG: SPY: CRAM ADR MAP Write, addr 0x%X, data 0x%X\n",
+		 pS[I].loc_ctr_reg.raw,
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
         if (NUbus_Request == VM_READ) {
           int map_addr = ((pS[I].loc_ctr_reg.raw&0xFFFF)>>4);
           NUbus_Data.word = pS[I].CRAM_map[map_addr];
-          printf("RG: SPY: CRAM ADR MAP Read, addr 0x%X, data 0x%X\n",pS[I].loc_ctr_reg.raw,NUbus_Data.word);
+          trace_log_2u("RG: SPY: CRAM ADR MAP Read, addr 0x%X, data 0x%X\n",
+		 pS[I].loc_ctr_reg.raw,
+		 NUbus_Data.word);
           NUbus_acknowledge = 1;
           return;
         }
@@ -2595,14 +2634,19 @@ void lambda_nubus_slave(int I) {
           uint32_t Word = pS[I].CRAM_map[map_addr];
           Word >>= (8*NUbus_Address.Byte);
           NUbus_Data.byte[NUbus_Address.Byte] = Word&0xFF;
-          printf("RG: SPY: CRAM ADR MAP Byte Read, data 0x%X\n",NUbus_Data.byte[NUbus_Address.Byte]);
+          trace_log_1u("RG: SPY: CRAM ADR MAP Byte Read, data 0x%X\n",
+		 NUbus_Data.byte[NUbus_Address.Byte]);
           NUbus_acknowledge=1;
           return;
         }
         break;
       }
-      printf("RG: Unimplemented SPY Request %o Addr 0x%X (Reg 0%o) w/ data 0x%X (0%o)\n",
-	     NUbus_Request,NUbus_Address.raw,spy_reg,NUbus_Data.word,NUbus_Data.word);
+      trace_log_5u("RG: Unimplemented SPY Request %o Addr 0x%X (Reg 0%o) w/ data 0x%X (0%o)\n",
+	     NUbus_Request,
+	     NUbus_Address.raw,
+	     spy_reg,
+	     NUbus_Data.word,
+	     NUbus_Data.word);
       pS[I].cpu_die_rq = 1;
     }
     break;
@@ -2611,7 +2655,8 @@ void lambda_nubus_slave(int I) {
       // Interrupt!
       uint8_t Vector = ((NUbus_Address.Addr>>2)&0xFF);
       if (NUbus_trace == 1) {
-	printf("RG: INTERRUPT RQ: Vector %o",Vector);
+	trace_log_1u("RG: INTERRUPT RQ: Vector %o",
+	       Vector);
       }
       // Light vector bit if enabled
       if (pS[I].RG_Mode.Interrupt_Enable != 0) {
@@ -3219,7 +3264,9 @@ void sm_clock_pulse(int I,int clock,Processor_Mode_Reg *oldPMR) {
       // This is a SM CLOCK.
       // A normal instruction happens in two of these, one of which must be 03000.
       // 03000 is a source phase
-      printf("RG %d: PMR: SM CLOCK RISING EDGE: TRAM_PC 0%o\n",I,pS[I].TRAM_PC);
+      trace_log_2u("RG: %d: PMR: SM CLOCK RISING EDGE: TRAM_PC 0%o\n",
+		   I,
+		   pS[I].TRAM_PC);
       // Update UI clock.
       // The same SM clock which causes the source codeword to appear in TREG also raises UI clock.
       if (pS[I].TREG.new_uinst != 0 && pS[I].PMR.Allow_UInst_Clocks != 0) {
@@ -3588,7 +3635,7 @@ void sm_clock_pulse(int I,int clock,Processor_Mode_Reg *oldPMR) {
       }
       // Fool the CSMRAM data path test
       if (pS[I].CSM_Adr.Addr == 0xfff) {
-	printf("RG: CSM Output Reg Loaded from CSMRAM\n");
+	trace_log("RG: CSM Output Reg Loaded from CSMRAM\n");
 	pS[I].CSM_Output = pS[I].CSMRAM[pS[I].CSM_Adr.Addr].raw;
       }
       // Handle source read
@@ -3600,7 +3647,9 @@ void sm_clock_pulse(int I,int clock,Processor_Mode_Reg *oldPMR) {
 	printf("TREG %d: M = 0x%.8X A = 0x%.8X\n",I,pS[I].Mbus,pS[I].Abus);
       }
     } else {
-      printf("RG %d: PMR: SM CLOCK HI: TRAM_PC 0%o\n",I,pS[I].TRAM_PC);
+      trace_log_2u("RG: %d: PMR: SM CLOCK HI: TRAM_PC 0%o\n",
+		   I,
+		   pS[I].TRAM_PC);
     }
   }
 }

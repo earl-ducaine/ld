@@ -511,13 +511,14 @@ void sdl_cleanup(void){
 }
 
 // Timer callback
-uint32_t sdl_timer_callback(uint32_t interval, void *param __attribute__ ((unused))){
+uint32_t sdl_timer_callback(uint32_t interval,
+			    void *param __attribute__ ((unused))) {
   // Real time passed
   real_time++;
   // Also increment status update counter
   stat_time++;
   // Return next interval
-  return(interval);
+  return interval;
 }
 
 int sdl_init(int width, int height) {
@@ -588,8 +589,8 @@ int sdl_init(int width, int height) {
   SDL_ShowCursor(SDL_DISABLE);
   atexit(sdl_cleanup);
   // Kick interval timer
-  SDLTimer = SDL_AddTimer(100,sdl_timer_callback,NULL);
-  if(SDLTimer == NULL){
+  SDLTimer = SDL_AddTimer(100, sdl_timer_callback, NULL);
+  if (SDLTimer == NULL) {
     fprintf(stderr,"Unable to start interval timer\n");
     exit(-1);
   }
