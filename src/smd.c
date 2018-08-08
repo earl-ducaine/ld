@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 
+/* Copyright 2016-2017
    Daniel Seagraves <dseagrav@lunar-tokyo.net>
    Barry Silverman <barry@disus.com>
 
@@ -163,15 +163,15 @@ extern int ld_die_rq;
 // Filenames
 char disk_fn[4][64] = { "disks/disk.img",{0},{0},{0} };
 
-int smd_init(){
+int smd_init() {
   int x=0,y=0;
-  while(x < 4){
-    if(disk_fn[x][0] != 0){
+  while(x < 4) {
+    if (disk_fn[x][0] != 0) {
       disk_fd[x] = open(disk_fn[x],O_RDWR);
-      if(disk_fd[x] < 0){
+      if (disk_fd[x] < 0) {
 	perror("Disk:open");
 	disk_fd[x] = -1;
-      }else{
+      } else {
 	y++;
       }
     }
@@ -180,19 +180,19 @@ int smd_init(){
   return(y);
 }
 
-void smd_reset(){
+void smd_reset() {
   SMD_RStatus.raw = 0;
-  if(disk_fd[0] > 0){ SMD_RStatus.Unit1Ready = 1; }
-  if(disk_fd[1] > 0){ SMD_RStatus.Unit2Ready = 1; }
-  if(disk_fd[2] > 0){ SMD_RStatus.Unit3Ready = 1; }
-  if(disk_fd[3] > 0){ SMD_RStatus.Unit4Ready = 1; }
+  if (disk_fd[0] > 0) { SMD_RStatus.Unit1Ready = 1; }
+  if (disk_fd[1] > 0) { SMD_RStatus.Unit2Ready = 1; }
+  if (disk_fd[2] > 0) { SMD_RStatus.Unit3Ready = 1; }
+  if (disk_fd[3] > 0) { SMD_RStatus.Unit4Ready = 1; }
 }
 
-void smd_clock_pulse(){
-  if(SMD_Controller_State > 0){
-    switch(SMD_Controller_State){
+void smd_clock_pulse() {
+  if (SMD_Controller_State > 0) {
+    switch(SMD_Controller_State) {
     case 1: // GO!
-      if(SDU_disk_trace){
+      if (SDU_disk_trace) {
         printf("SMD: Controller Go! SMD_IOPB_Base = 0x%X\n",SMD_IOPB_Base.raw);
       }
       // Set up transfer
@@ -200,17 +200,18 @@ void smd_clock_pulse(){
       SMD_Xfer_Size = 24;
       SMD_Xfer_Count = 0;
       SMD_Xfer_Mode = SMD_RCmd.Bus_Word_Mode;
-      if(SMD_Xfer_Mode == 1 && ((SMD_Xfer_Addr.raw&0x01) != 0)){ SMD_Xfer_Mode = 0; } // Not on word boundary
+      if (SMD_Xfer_Mode == 1 && ((SMD_Xfer_Addr.raw&0x01) != 0)) { SMD_Xfer_Mode = 0; } // Not on word boundary
       SMD_Controller_State++;
+      __attribute__ ((fallthrough));
     case 2: // Read
-      if(SMD_Xfer_Mode == 1){
+      if (SMD_Xfer_Mode == 1) {
 	SMD_IOPB.hword[SMD_Xfer_Count>>1] = multibus_word_read(SMD_Xfer_Addr);
 	SMD_Xfer_Count += 2; SMD_Xfer_Addr.raw += 2;
-      }else{
+      } else {
 	SMD_IOPB.byte[SMD_Xfer_Count] = multibus_read(SMD_Xfer_Addr);
 	SMD_Xfer_Count++; SMD_Xfer_Addr.raw++;
       }
-      if(SMD_Xfer_Count >= SMD_Xfer_Size){
+      if (SMD_Xfer_Count >= SMD_Xfer_Size) {
 	SMD_Controller_State = 5;
       }
       break;
@@ -241,7 +242,7 @@ void smd_clock_pulse(){
         SMD_IOPB.byte[21] = SMD_IOPB.byte[23];
         SMD_IOPB.byte[23] = tmp;
       }
-      if(SDU_disk_trace){
+      if (SDU_disk_trace) {
         printf("SMD: IOPB read completed!\n");
         printf("Command: 0x%X\n",SMD_IOPB.Command);
         printf("BUF_WM %X BUF_RM %X RSV %X IOPB_WM %X IOPB_RM %X IOPB_Link %X\n",
@@ -255,25 +256,25 @@ void smd_clock_pulse(){
 	       SMD_IOPB.Buffer_Address,SMD_IOPB.IO_Address,SMD_IOPB.IO_Segment,SMD_IOPB.Next_IOPB);
       }
       // Halt for investigation of these
-      // if(SMD_IOPB.Unit != 0){ printf("SMD: Not unit 0?\n"); ld_die_rq = 1; }
-      // if(SMD_IOPB.IOPB_Link != 0){ printf("SMD: Link bit set?\n"); ld_die_rq = 1; }
-      if(SMD_IOPB.IOPB_RelativeMode != 0 && SMD_IOPB.Buffer_RelativeMode){ printf("SMD: Relative mode?\n"); ld_die_rq = 1; }
-      // if(SMD_IOPB.Buffer_WordMode == 0){ printf("SMD: Buffer not word mode?\n"); ld_die_rq = 1; }
+      // if (SMD_IOPB.Unit != 0) { printf("SMD: Not unit 0?\n"); ld_die_rq = 1; }
+      // if (SMD_IOPB.IOPB_Link != 0) { printf("SMD: Link bit set?\n"); ld_die_rq = 1; }
+      if (SMD_IOPB.IOPB_RelativeMode != 0 && SMD_IOPB.Buffer_RelativeMode) { printf("SMD: Relative mode?\n"); ld_die_rq = 1; }
+      // if (SMD_IOPB.Buffer_WordMode == 0) { printf("SMD: Buffer not word mode?\n"); ld_die_rq = 1; }
       // Set up transfer to write status
       SMD_Xfer_Addr.raw = SMD_IOPB_Base.raw+2;
       // Mark IOPB busy
       SMD_IOPB.Status = 0x81; // COMMAND BUSY
       // Write back status
       // nubus_io_request(VM_WRITE,0xFF,NB_Addr.raw,SMD_IOPB.word[0]);
-      if(SMD_IOPB.IOPB_WordMode != 0 && ((SMD_Xfer_Addr.raw&0x01) == 0)){
+      if (SMD_IOPB.IOPB_WordMode != 0 && ((SMD_Xfer_Addr.raw&0x01) == 0)) {
 	multibus_word_write(SMD_Xfer_Addr,SMD_IOPB.hword[1]); SMD_Xfer_Addr.raw += 2;
-      }else{
+      } else {
 	multibus_write(SMD_Xfer_Addr,SMD_IOPB.byte[2]); SMD_Xfer_Addr.raw++;
 	multibus_write(SMD_Xfer_Addr,SMD_IOPB.byte[3]); SMD_Xfer_Addr.raw++;
       }
-      
+
       // Process command
-      switch(SMD_IOPB.Command){
+      switch(SMD_IOPB.Command) {
       case 0x81: // READ
         SMD_Controller_State = 20;  // READ SETUP
         break;
@@ -290,20 +291,20 @@ void smd_clock_pulse(){
 	// This wrote a UIB into the controller so it could talk to the drive.
 	SMD_Controller_State = 10;
 	// See SMD_UIB for the format.
-	// We'll fake having read it.	
+	// We'll fake having read it.
 	// SMD_IOPB.Status = 0x80; // OPERATION COMPLETED SUCCESSFULLY
 	// SMD_Controller_State = 90;  // FREE IOPB
 	break;
       case 0x89: // RESTORE
 	// Seek to track zero
 	printf("SMD: RESTORE\n");
-	if(disk_fd[SMD_IOPB.Unit] < 0){
+	if (disk_fd[SMD_IOPB.Unit] < 0) {
 	  printf("SMD: UNIT %d NOT READY ERROR\n",SMD_IOPB.Unit);
 	  SMD_IOPB.Error = 0x10; // DISK NOT READY
 	  SMD_IOPB.Status = 0x82; // OPERATION FAILED
 	  SMD_Controller_State = 90; // Free IOPB
 	  // ld_die_rq = 1;
-	  break;	
+	  break;
 	}
 	SMD_IOPB.Status = 0x80; // OPERATION COMPLETED SUCCESSFULLY
 	SMD_Controller_State = 90;  // FREE IOPB
@@ -312,13 +313,13 @@ void smd_clock_pulse(){
 	// Not sure what exactly this is supposed to do.
 	// The data appears to be unused, or 2181 doesn't care if I don't touch it.
 	// printf("SMD: VERIFY\n");
-	if(disk_fd[SMD_IOPB.Unit] < 0){
+	if (disk_fd[SMD_IOPB.Unit] < 0) {
 	  printf("SMD: UNIT %d NOT READY ERROR\n",SMD_IOPB.Unit);
 	  SMD_IOPB.Error = 0x10; // DISK NOT READY
 	  SMD_IOPB.Status = 0x82; // OPERATION FAILED
 	  SMD_Controller_State = 90; // Free IOPB
 	  // ld_die_rq = 1;
-	  break;	
+	  break;
 	}
 	SMD_IOPB.Status = 0x80; // OPERATION COMPLETED SUCCESSFULLY
 	SMD_Controller_State = 90;  // FREE IOPB
@@ -340,21 +341,22 @@ void smd_clock_pulse(){
       SMD_Xfer_Size = 17;
       SMD_Xfer_Count = 0;
       SMD_Xfer_Mode = SMD_IOPB.Buffer_WordMode;
-      if(SMD_Xfer_Mode == 1 && ((SMD_Xfer_Addr.raw&0x01) != 0)){
+      if (SMD_Xfer_Mode == 1 && ((SMD_Xfer_Addr.raw&0x01) != 0)) {
 	SMD_Xfer_Mode = 0; // Not on word boundary
       }
       SMD_Controller_State++;
+      __attribute__ ((fallthrough));
     case 11: // OBTAIN UIB
-      if(SMD_Xfer_Mode == 1){
+      if (SMD_Xfer_Mode == 1) {
 	SMD_UIB[SMD_IOPB.Unit].hword[SMD_Xfer_Count>>1] =
 	  multibus_word_read(SMD_Xfer_Addr);
 	SMD_Xfer_Count += 2; SMD_Xfer_Addr.raw += 2;
-      }else{
+      } else {
 	SMD_UIB[SMD_IOPB.Unit].byte[SMD_Xfer_Count] =
 	  multibus_read(SMD_Xfer_Addr);
 	SMD_Xfer_Count++; SMD_Xfer_Addr.raw++;
       }
-      if(SMD_Xfer_Count >= SMD_Xfer_Size){
+      if (SMD_Xfer_Count >= SMD_Xfer_Size) {
 	SMD_Controller_State++;
       }
       break;
@@ -366,16 +368,16 @@ void smd_clock_pulse(){
       SMD_IOPB.Status = 0x80; // OPERATION COMPLETED SUCCESSFULLY
       SMD_Controller_State = 90; // Free IOPB
       break;
-      
+
     case 20: // READ SETUP
       // PC uses 512 byte sectors, Lambda uses 1024
-      if(disk_fd[SMD_IOPB.Unit] < 0){
+      if (disk_fd[SMD_IOPB.Unit] < 0) {
 	printf("SMD: UNIT %d NOT READY ERROR\n",SMD_IOPB.Unit);
 	SMD_IOPB.Error = 0x10; // DISK NOT READY
 	SMD_IOPB.Status = 0x82; // OPERATION FAILED
         SMD_Controller_State = 90; // Free IOPB
 	// ld_die_rq = 1;
-	break;	
+	break;
       }
       SMD_Sector = (SMD_IOPB.Cylinder*(SMD_UIB[SMD_IOPB.Unit].Sectors*SMD_UIB[SMD_IOPB.Unit].Tracks))+
 	(SMD_IOPB.Head*SMD_UIB[SMD_IOPB.Unit].Sectors)+
@@ -384,9 +386,11 @@ void smd_clock_pulse(){
       SMD_Sector_Counter = 0;
       SMD_Xfer_Addr.raw = SMD_IOPB.Buffer_Address;
       SMD_Xfer_Size = SMD_IOPB.DMA_Burst_Size;
-      SMD_Controller_State++; // Fall into
+      SMD_Controller_State++;
+      // Fall into
+      __attribute__ ((fallthrough));
     case 21: // DISK READ SECTOR
-      switch(SMD_IOPB.Unit){
+      switch(SMD_IOPB.Unit) {
       case 0:
 	SMD_RStatus.Unit1Ready = 0; break; // Drive is busy
       case 1:
@@ -398,7 +402,7 @@ void smd_clock_pulse(){
       }
       // Reposition the file pointer.
       seek_res = lseek(disk_fd[SMD_IOPB.Unit],(SMD_Sector*0x400),SEEK_SET);
-      if(seek_res < 0){
+      if (seek_res < 0) {
 	// Seek error!
 	printf("SMD: SEEK ERROR!\n");
 	SMD_IOPB.Error = 0x12; // SEEK ERROR
@@ -412,14 +416,14 @@ void smd_clock_pulse(){
       SMD_Controller_State++;
       break;
     case 22: // DISK READ SECTOR: OPERATION COMPLETE
-      if(io_res < 0){	
+      if (io_res < 0) {
         // There was an error
 	// FIXME: USE MAX RETRY COUNT FROM UIB
-	if(SMD_Retries < 3){	  
+	if (SMD_Retries < 3) {
 	  // retry the operation
 	  SMD_Retries++;
 	  SMD_Controller_State--;
-	}else{
+	} else {
 	  // Fail
 	  printf("SMD: READ ERROR!\n");
 	  SMD_IOPB.Error = 0x23; // UNCORRECTABLE READ ERROR
@@ -429,7 +433,7 @@ void smd_clock_pulse(){
         break;
       }
       // printf("SMD: Read completed!\n");
-      switch(SMD_IOPB.Unit){
+      switch(SMD_IOPB.Unit) {
       case 0:
 	SMD_RStatus.Unit1Ready = 1; break; // Drive is busy
       case 1:
@@ -443,22 +447,23 @@ void smd_clock_pulse(){
       SMD_Burst_Counter = 0;
       SMD_Xfer_Count = 0;
       SMD_Xfer_Mode = SMD_IOPB.Buffer_WordMode;
-      if(SMD_Xfer_Mode == 1 && ((SMD_Xfer_Addr.raw&0x01) != 0)){ SMD_Xfer_Mode = 0; } // Not on word boundary
+      if (SMD_Xfer_Mode == 1 && ((SMD_Xfer_Addr.raw&0x01) != 0)) { SMD_Xfer_Mode = 0; } // Not on word boundary
       SMD_Controller_State++;
       // Fall into
+      __attribute__ ((fallthrough));
     case 23: // Write Loop
       {
 	uint16_t BurstOffset = SMD_Xfer_Size*SMD_Burst_Counter;
-	if(SMD_Xfer_Mode == 1 && (SMD_Xfer_Size-SMD_Xfer_Count) > 1){
-	  multibus_word_write(SMD_Xfer_Addr,*(uint16_t *)(SMD_BUFFER_RAM+(BurstOffset+SMD_Xfer_Count))); 
+	if (SMD_Xfer_Mode == 1 && (SMD_Xfer_Size-SMD_Xfer_Count) > 1) {
+	  multibus_word_write(SMD_Xfer_Addr,*(uint16_t *)(SMD_BUFFER_RAM+(BurstOffset+SMD_Xfer_Count)));
 	  SMD_Xfer_Count += 2;
 	  SMD_Xfer_Addr.raw += 2;
-	}else{
+	} else {
 	  multibus_write(SMD_Xfer_Addr,SMD_BUFFER_RAM[BurstOffset+SMD_Xfer_Count]);
 	  SMD_Xfer_Count++;
 	  SMD_Xfer_Addr.raw++;
 	}
-	if(SMD_Xfer_Count >= SMD_Xfer_Size){
+	if (SMD_Xfer_Count >= SMD_Xfer_Size) {
 	  // Done with this burst.
           SMD_Xfer_Count = 0;
           SMD_Controller_State = 25;
@@ -467,27 +472,28 @@ void smd_clock_pulse(){
       }
       break;
     case 25: // Burst completed
-      if(SMD_Burst_Counter*SMD_IOPB.DMA_Burst_Size >= 1024){
+      if (SMD_Burst_Counter*SMD_IOPB.DMA_Burst_Size >= 1024) {
         // Sector completed!
         SMD_Sector_Counter++;
-        if(SMD_Sector_Counter >= SMD_IOPB.SectorCount){
+        if (SMD_Sector_Counter >= SMD_IOPB.SectorCount) {
           // Done with read command!
           SMD_Controller_State++;
-        }else{
+        } else {
           // Next sector!
           SMD_Sector++;
 	  SMD_Retries = 0;
           SMD_Controller_State = 21; // Read it
           break;
         }
-      }else{
+      } else {
         // Do next burst
         SMD_Controller_State = 23;
         break;
       }
       // FALL INTO
+      __attribute__ ((fallthrough));
     case 26: // Operation completed
-      if(SDU_disk_trace){
+      if (SDU_disk_trace) {
         printf("SMD: READ OPERATION COMPLETE: 0x%X bursts, 0x%X sectors of %X completed.\n",
 	       SMD_Burst_Counter,SMD_Sector_Counter,SMD_IOPB.SectorCount);
       }
@@ -497,13 +503,13 @@ void smd_clock_pulse(){
 
     case 30: // WRITE SETUP
       // PC uses 512 byte sectors
-      if(disk_fd[SMD_IOPB.Unit] < 0){
+      if (disk_fd[SMD_IOPB.Unit] < 0) {
 	printf("SMD: UNIT %d NOT READY ERROR\n",SMD_IOPB.Unit);
 	SMD_IOPB.Error = 0x10; // DISK NOT READY
 	SMD_IOPB.Status = 0x82; // OPERATION FAILED
         SMD_Controller_State = 90; // Free IOPB
 	// ld_die_rq = 1;
-	break;	
+	break;
       }
       /*
       SMD_Sector = (SMD_IOPB.Cylinder*disk_geometry_spc)+
@@ -512,7 +518,7 @@ void smd_clock_pulse(){
       */
       SMD_Sector = (SMD_IOPB.Cylinder*(SMD_UIB[SMD_IOPB.Unit].Sectors*SMD_UIB[SMD_IOPB.Unit].Tracks))+
 	(SMD_IOPB.Head*SMD_UIB[SMD_IOPB.Unit].Sectors)+
-	SMD_IOPB.Sector;      
+	SMD_IOPB.Sector;
       SMD_Retries = 0;
       SMD_Xfer_Count = 0;
       SMD_Sector_Counter = 0; SMD_Burst_Counter = 0;
@@ -524,15 +530,15 @@ void smd_clock_pulse(){
       {
         uint16_t BurstOffset = SMD_Xfer_Size*SMD_Burst_Counter;
 	/*
-	if(SMD_IOPB.Buffer_WordMode != 0 && (SMD_Xfer_Addr.raw&0x01) == 0 && (SMD_Xfer_Size-SMD_Xfer_Count) > 1){
+	if (SMD_IOPB.Buffer_WordMode != 0 && (SMD_Xfer_Addr.raw&0x01) == 0 && (SMD_Xfer_Size-SMD_Xfer_Count) > 1) {
 	  *(uint16_t *)(SMD_BUFFER_RAM+(BurstOffset+SMD_Xfer_Count)) = multibus_word_read(SMD_Xfer_Addr);
 	  SMD_Xfer_Count += 2;
 	  SMD_Xfer_Addr.raw += 2;
-	  }else{ */
+	  } else { */
 	  SMD_BUFFER_RAM[BurstOffset+SMD_Xfer_Count] = multibus_read(SMD_Xfer_Addr);
 	  SMD_Xfer_Count++; SMD_Xfer_Addr.raw++;
 	  // }
-        if(SMD_Xfer_Count >= SMD_Xfer_Size){
+        if (SMD_Xfer_Count >= SMD_Xfer_Size) {
           // Done with this burst.
           // printf("SMD: DMA BURST 0x");
           // writeH32(SMD_Burst_Counter);
@@ -540,21 +546,22 @@ void smd_clock_pulse(){
           SMD_Xfer_Count = 0;
           SMD_Burst_Counter++;
           SMD_Controller_State = 34;
-        }	
+        }
       }
       break;
     case 34: // DMA BURST COMPLETED
-      if(SMD_Burst_Counter*SMD_IOPB.DMA_Burst_Size >= 1024){
+      if (SMD_Burst_Counter*SMD_IOPB.DMA_Burst_Size >= 1024) {
         // Sector obtained! Write it!
         SMD_Controller_State++;
-      }else{
+      } else {
         // Do next burst
         SMD_Controller_State = 31;
         break;
       }
-      // FALL INTO
+      // Fall into
+      __attribute__ ((fallthrough));
     case 35: // WRITE SECTOR
-      switch(SMD_IOPB.Unit){
+      switch(SMD_IOPB.Unit) {
       case 0:
 	SMD_RStatus.Unit1Ready = 0; break; // Drive is busy
       case 1:
@@ -567,10 +574,10 @@ void smd_clock_pulse(){
       // printf("SMD: Writing 2 blocks at LBA 0x");
       // writeH32(SMD_LBA);
       // printf("\n");
-      
+
       // Reposition the file pointer.
       seek_res = lseek(disk_fd[SMD_IOPB.Unit],(SMD_Sector*0x400),SEEK_SET);
-      if(seek_res < 0){
+      if (seek_res < 0) {
 	// Seek error!
 	printf("SMD: SEEK ERROR!\n");
 	SMD_IOPB.Error = 0x12; // SEEK ERROR
@@ -583,14 +590,14 @@ void smd_clock_pulse(){
       SMD_Controller_State++;
       break;
     case 36: // DISK WRITE SECTOR: OPERATION COMPLETE
-      if(io_res < 0){
+      if (io_res < 0) {
         // There was an error
 	// FIXME: USE MAX RETRY COUNT FROM UIB
-	if(SMD_Retries < 3){	  
+	if (SMD_Retries < 3) {
 	  // retry the operation
 	  SMD_Retries++;
 	  SMD_Controller_State--;
-	}else{
+	} else {
 	  // Fail
 	  printf("SMD: WRITE ERROR!\n");
 	  SMD_IOPB.Error = 0x1E; // DRIVE FAULTED
@@ -600,7 +607,7 @@ void smd_clock_pulse(){
         break;
       }
       // printf("SMD: Write completed!\n");
-      switch(SMD_IOPB.Unit){
+      switch(SMD_IOPB.Unit) {
       case 0:
 	SMD_RStatus.Unit1Ready = 1; break; // Drive is busy
       case 1:
@@ -612,16 +619,16 @@ void smd_clock_pulse(){
       }
       // Sector completed!
       SMD_Sector_Counter++;
-      if(SMD_Sector_Counter >= SMD_IOPB.SectorCount){
+      if (SMD_Sector_Counter >= SMD_IOPB.SectorCount) {
         // Done with write command!
-        if(SDU_disk_trace){
+        if (SDU_disk_trace) {
           printf("SMD: WRITE OPERATION COMPLETE: 0x%X bursts, 0x%X sectors of %X completed.\n",
 		 SMD_Burst_Counter,SMD_Sector_Counter,SMD_IOPB.SectorCount);
         }
 	SMD_IOPB.Status = 0x80; // OPERATION COMPLETED SUCCESSFULLY
         SMD_Controller_State = 90; // Free IOPB
         break;
-      }else{
+      } else {
         // Next sector!
         SMD_Burst_Counter = 0;
         SMD_Sector++;
@@ -635,14 +642,14 @@ void smd_clock_pulse(){
       // Set up transfer to write status back
       SMD_Xfer_Addr.raw = SMD_IOPB_Base.raw+2;
       // Issue writes
-      if(SMD_IOPB.IOPB_WordMode != 0 && ((SMD_Xfer_Addr.raw&0x01) == 0)){
+      if (SMD_IOPB.IOPB_WordMode != 0 && ((SMD_Xfer_Addr.raw&0x01) == 0)) {
         multibus_word_write(SMD_Xfer_Addr,SMD_IOPB.hword[1]); SMD_Xfer_Addr.raw += 2;
-      }else{
+      } else {
 	multibus_write(SMD_Xfer_Addr,SMD_IOPB.byte[2]); SMD_Xfer_Addr.raw++;
 	multibus_write(SMD_Xfer_Addr,SMD_IOPB.byte[3]); SMD_Xfer_Addr.raw++;
       }
       // If the operation was a success and the link bit is set, we should follow it here.
-      if(SMD_IOPB.Status == 0x80 && SMD_IOPB.IOPB_Link != 0){
+      if (SMD_IOPB.Status == 0x80 && SMD_IOPB.IOPB_Link != 0) {
 	SMD_IOPB_Base.raw = SMD_IOPB.Next_IOPB;
 	printf("SMD: Following link to 0x%X\n",SMD_IOPB.Next_IOPB);
 	SMD_Controller_State = 1;
@@ -652,9 +659,9 @@ void smd_clock_pulse(){
       SMD_RStatus.Int_Pending = 1;
 
       /*
-      if(SDU_Shared_Disk_Mode != 1){
+      if (SDU_Shared_Disk_Mode != 1) {
         SMD_Controller_State = 0; // All done, stop controller.
-      }else{
+      } else {
         share_struct->lock = 0; // Release lock
         SMD_Controller_State++; // Obtain next
       }
@@ -665,11 +672,11 @@ void smd_clock_pulse(){
       break;
       /*
     case 92: // SHARED DISK ACCESS MODE - AWAIT COMPLETION OF FINAL WRITE
-      if(NUbus_acknowledge == 0 && NUbus_error == 0){ break; }
+      if (NUbus_acknowledge == 0 && NUbus_error == 0) { break; }
       SMD_Controller_State++;
       // Fall into
     case 93: // SHARED DISK ACCESS MODE - INTERRUPT RX OR END OF OPERATION
-      if(SDU_disk_trace){
+      if (SDU_disk_trace) {
         printf("SMD: SHARED DISK ACCESS OP START\n");
         printf("SDU: share-struct lock 0x");
         writeH32(share_struct->lock);
@@ -679,14 +686,14 @@ void smd_clock_pulse(){
         writeH32(share_struct->current_iopb);
         printf("\n");
       }
-      if(share_struct->lock != 0){ break; } // Busy, come back later
+      if (share_struct->lock != 0) { break; } // Busy, come back later
       share_struct->lock = 1; // Take lock
       Active_SIOPB = 0;
       share_struct->current_iopb = Active_SIOPB;
       SMD_Controller_State++; // Fall into...
     case 94: // SHARED DISK ACCESS MODE - CHECK IOPB LOOP
-      while(Active_SIOPB < share_struct->max_iopbs){
-        if(SDU_disk_trace){
+      while(Active_SIOPB < share_struct->max_iopbs) {
+        if (SDU_disk_trace) {
           printf("SDU: share-iopb ");
           writeDec(Active_SIOPB);
           printf(" validity 0x");
@@ -694,28 +701,28 @@ void smd_clock_pulse(){
           printf(" siopb_ptr 0x");
           writeH32(share_struct->siopb_ptr[Active_SIOPB]);
         }
-        if(share_struct->valid_siopb[Active_SIOPB] == 1 && share_struct->siopb_ptr[Active_SIOPB] > 0){
+        if (share_struct->valid_siopb[Active_SIOPB] == 1 && share_struct->siopb_ptr[Active_SIOPB] > 0) {
           Share_i8086_Addr.raw = share_struct->siopb_ptr[Active_SIOPB];
           Share_Xfer_Addr.raw = ((Share_i8086_Addr.Segment<<4)+Share_i8086_Addr.Offset);
-          if(SDU_disk_trace){
+          if (SDU_disk_trace) {
             printf(" (BUS ADDR 0x");
             writeH32(Share_Xfer_Addr.raw);
             printf(", MAPENT 0x");
             writeH32(Share_Xfer_Addr.Page);
             printf(")");
           }
-          if(MNA_MAP[Share_Xfer_Addr.Page].Enable != 0){
+          if (MNA_MAP[Share_Xfer_Addr.Page].Enable != 0) {
             Share_NB_Addr.Page = MNA_MAP[Share_Xfer_Addr.Page].NUbus_Page;
             Share_NB_Addr.Offset = Share_Xfer_Addr.Offset;
-            if(SDU_disk_trace){
+            if (SDU_disk_trace) {
               printf(" (NB ADDR 0x");
               writeH32(Share_NB_Addr.raw);
               printf(")");
             }
             // This address should be in SDU RAM.
-            if(Share_NB_Addr.raw < 0xFF000000 || Share_NB_Addr.raw > 0xFF00FFFF){
+            if (Share_NB_Addr.raw < 0xFF000000 || Share_NB_Addr.raw > 0xFF00FFFF) {
               // printf("SHARE IOPB NOT IN SDU RAM?");
-              if(SDU_disk_trace){
+              if (SDU_disk_trace) {
                 printf(" (NOT SDU!)\n");
               }
               // ld_die_rq = 1;
@@ -725,49 +732,49 @@ void smd_clock_pulse(){
               nubus_io_request(VM_READ,0xFF,Share_NB_Addr.raw,0);
               SMD_Controller_State++;
               break;
-            }else{
+            } else {
               uint32_t SIOPB_Addr = Share_NB_Addr.raw-0xFF000000;
               uint32_t runme = *(uint32_t *)&SDU_RAM[SIOPB_Addr];
               uint32_t share_iopb = *(uint32_t *)&SDU_RAM[SIOPB_Addr+12];
-              if(SDU_disk_trace){
+              if (SDU_disk_trace) {
                 printf(" RUNME = 0x");
                 writeH32(runme);
                 printf(", IOPB = 0x");
                 writeH32(share_iopb);
               }
-              if(runme == 1){
+              if (runme == 1) {
                 Share_i8086_Addr.raw = share_iopb;
                 Share_Xfer_Addr.raw = ((Share_i8086_Addr.Segment<<4)+Share_i8086_Addr.Offset);
-                if(MNA_MAP[Share_Xfer_Addr.Page].Enable != 0){
+                if (MNA_MAP[Share_Xfer_Addr.Page].Enable != 0) {
                   SMD_IOPB_Base.raw = Share_Xfer_Addr.raw;
                   SMD_RCmd.raw = 0x23;
                   SMD_RStatus.Int_Pending = 0; // Clear the interrupt pending bit
                   SMD_Controller_State = 1; // Make controller go
                   *(uint32_t *)&SDU_RAM[SIOPB_Addr] = 0; // Clear runme
-                  if(SDU_disk_trace){
+                  if (SDU_disk_trace) {
                     printf("\n");
                   }
                   break;
-                }else{
+                } else {
                   printf("NO MAP FOR REAL IOPB?\n");
                   ld_die_rq = 1;
                   break;
                 }
               }
             }
-          }else{
+          } else {
             printf("NO MAP FOR SHARE IOPB?\n");
             ld_die_rq = 1;
           }
         }
-        if(SDU_disk_trace){
+        if (SDU_disk_trace) {
           printf("\n");
         }
         Active_SIOPB++;
       }
-      if(Active_SIOPB == share_struct->max_iopbs){
+      if (Active_SIOPB == share_struct->max_iopbs) {
         Active_SIOPB = 0;
-        if(SDU_disk_trace){
+        if (SDU_disk_trace) {
           printf("SDU: All shared disk operations complete, controller halting\n");
         }
         share_struct->lock = 0; // Release lock
@@ -776,42 +783,42 @@ void smd_clock_pulse(){
       share_struct->current_iopb = Active_SIOPB;
       break;
     case 95: // AWAIT SHARE IOPB RUNME WORD
-      if(NUbus_acknowledge == 0 && NUbus_error == 0){ break; }
-      if(SDU_disk_trace){
+      if (NUbus_acknowledge == 0 && NUbus_error == 0) { break; }
+      if (SDU_disk_trace) {
         printf("SDU: Handling runme word\n");
       }
       SMD_Controller_State++;
       // Fall into
     case 96: // HANDLE RUNME WORD
-      if(NUbus_master == 0xFF){
+      if (NUbus_master == 0xFF) {
         uint32_t runme = NUbus_Data.word;
-        if(NUbus_error != 0){
+        if (NUbus_error != 0) {
           // Error
           printf("SDU: Bus error reading slot ");
           writeDec(Active_SIOPB);
           printf(" runme word\n");
           ld_die_rq = 1;
         }
-        if(SDU_disk_trace){
+        if (SDU_disk_trace) {
           printf("SDU: RUNME = 0x");
           writeH32(runme);
         }
-        if(runme == 1){
-          if(SDU_disk_trace){
+        if (runme == 1) {
+          if (SDU_disk_trace) {
             printf(", FETCHING POINTER\n");
           }
           // Read pointer and await result
           nubus_io_request(VM_READ,0xFF,Share_Runme_Addr+12,0);
           SMD_Controller_State++;
           break;
-        }else{
+        } else {
           // Advance through loop
           Active_SIOPB++;
-          if(Active_SIOPB == share_struct->max_iopbs){
+          if (Active_SIOPB == share_struct->max_iopbs) {
             Active_SIOPB = 0;
           }
           share_struct->current_iopb = Active_SIOPB;
-          if(SDU_disk_trace){
+          if (SDU_disk_trace) {
             printf(", ADVANCING LOOP - NEW ACTIVE SIOPB = ");
             writeDec(Active_SIOPB);
             printf("\n");
@@ -819,11 +826,11 @@ void smd_clock_pulse(){
           SMD_Controller_State = 94;
           break;
         }
-      }else{
+      } else {
         // Our request got lost or stolen, repeat it.
         printf("SDU: Bus cycle stolen by card 0x");
         writeH32(NUbus_master);
-        if(NUbus_Busy != 0){ printf(" - Awaiting bus free\n"); break; }
+        if (NUbus_Busy != 0) { printf(" - Awaiting bus free\n"); break; }
         printf(" - Repeating request\n");
         nubus_io_request(VM_READ,0xFF,Share_Runme_Addr,0);
         SMD_Controller_State--;
@@ -831,12 +838,12 @@ void smd_clock_pulse(){
       }
       break;
     case 97: // AWAIT SHARE IOPB POINTER WORD
-      if(NUbus_acknowledge == 0 && NUbus_error == 0){ break; }
+      if (NUbus_acknowledge == 0 && NUbus_error == 0) { break; }
       SMD_Controller_State++;
       // Fall into
     case 98: // HANDLE POINTER WORD
-      if(NUbus_master == 0xFF){
-        if(NUbus_error != 0){
+      if (NUbus_master == 0xFF) {
+        if (NUbus_error != 0) {
           // Error
           printf("SDU: Bus error reading slot ");
           writeDec(Active_SIOPB);
@@ -844,14 +851,14 @@ void smd_clock_pulse(){
           ld_die_rq = 1;
           break;
         }
-        if(SDU_disk_trace){
+        if (SDU_disk_trace) {
           printf("SDU: IOPB = 0x");
           writeH32(NUbus_Data.word);
           printf("\n");
         }
         Share_i8086_Addr.raw = NUbus_Data.word;
         Share_Xfer_Addr.raw = ((Share_i8086_Addr.Segment<<4)+Share_i8086_Addr.Offset);
-        if(MNA_MAP[Share_Xfer_Addr.Page].Enable != 0){
+        if (MNA_MAP[Share_Xfer_Addr.Page].Enable != 0) {
           SMD_IOPB_Base.raw = Share_Xfer_Addr.raw;
           SMD_RCmd.raw = 0x23;
           SMD_RStatus.Int_Pending = 0; // Clear the interrupt pending bit
@@ -859,17 +866,17 @@ void smd_clock_pulse(){
           nubus_io_request(VM_WRITE,0xFF,Share_Runme_Addr,0);
           SMD_Controller_State++;
           break;
-        }else{
-          if(SDU_disk_trace){
+        } else {
+          if (SDU_disk_trace) {
             printf("NO MAP FOR REAL IOPB?\n");
           }
           // Advance through loop
           Active_SIOPB++;
-          if(Active_SIOPB == share_struct->max_iopbs){
+          if (Active_SIOPB == share_struct->max_iopbs) {
             Active_SIOPB = 0;
           }
           share_struct->current_iopb = Active_SIOPB;
-          if(SDU_disk_trace){
+          if (SDU_disk_trace) {
             printf("SDU: ADVANCING LOOP - NEW ACTIVE SIOPB = ");
             writeDec(Active_SIOPB);
             printf("\n");
@@ -881,7 +888,7 @@ void smd_clock_pulse(){
       }
       break;
     case 99: // AWAIT SHARE IOPB RUNME WRITE COMPLETION
-      if(NUbus_acknowledge == 0 && NUbus_error == 0){ break; }
+      if (NUbus_acknowledge == 0 && NUbus_error == 0) { break; }
       SMD_Controller_State = 1; // Go!
       break;
       */
@@ -892,8 +899,8 @@ void smd_clock_pulse(){
   }
 }
 
-uint8_t smd_read(uint8_t addr){
-  switch(addr){
+uint8_t smd_read(uint8_t addr) {
+  switch(addr) {
   case 0: // Status Reg
     return(SMD_RStatus.raw);
     break;
@@ -904,12 +911,12 @@ uint8_t smd_read(uint8_t addr){
   return(0);
 }
 
-void smd_write(uint8_t addr,uint8_t data){
-  switch(addr){
+void smd_write(uint8_t addr,uint8_t data) {
+  switch(addr) {
   case 0: // Command Reg
     SMD_RCmd.raw = data;
-    if(SMD_RCmd.Clear_Int != 0){ SMD_RStatus.Int_Pending = 0; } // Clear the interrupt pending bit
-    if(SMD_RCmd.Go != 0 && SMD_Controller_State == 0){ SMD_Controller_State = 1; } // Make controller go
+    if (SMD_RCmd.Clear_Int != 0) { SMD_RStatus.Int_Pending = 0; } // Clear the interrupt pending bit
+    if (SMD_RCmd.Go != 0 && SMD_Controller_State == 0) { SMD_Controller_State = 1; } // Make controller go
     break;
   case 1: // IOPB Base (hi)
     SMD_IOPB_Base.byte[3] = 0;
@@ -921,7 +928,8 @@ void smd_write(uint8_t addr,uint8_t data){
   case 4: // IOPB Base (lower)
     // Lisp does this; Don't know why.
     SMD_IOPB_Base.raw <<= 8; // Move the other two up
-    // fall into
+    // Fall into
+    __attribute__ ((fallthrough));
   case 3: // IOPB Base (lo)
     SMD_IOPB_Base.byte[0] = data;
     break;

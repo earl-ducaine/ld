@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 
+/* Copyright 2016-2017
    Daniel Seagraves <dseagrav@lunar-tokyo.net>
 
    This file is part of LambdaDelta.
@@ -17,8 +17,15 @@
    along with LambdaDelta.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// Guard
+#ifndef TAPEMASTER_H
+#define TAPEMASTER_H
+
 void tapemaster_init();
 int tapemaster_open_next();
 void tapemaster_clock_pulse();
 void tapemaster_reset();
 void tapemaster_attn();
+int tapemaster_open_next();
+
+#endif // TAPEMASTER_H

@@ -10,6 +10,7 @@ lam_SOURCES = 3com.c \
 	lambda_cpu.h \
 	ld.h \
 	keyboard-sdl.h \
+	keyboard-sdl.c \
 	main.c \
 	mem.c \
 	mem.h \

@@ -82,5 +82,11 @@ extern int black_on_white[];
 void init_sdl_keyboard();
 void set_caption(char statbuf[]);
 void sdl_cleanup(void);
+int sdl_init(int width, int height);
+void sdl_refresh();
+
+uint32_t sdl_timer_callback(uint32_t interval,
+			    void *param __attribute__ ((unused)));
+
 
 #endif // KEYBOARD_SDL_H

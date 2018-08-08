@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 
+/* Copyright 2016-2017
    Daniel Seagraves <dseagrav@lunar-tokyo.net>
    Barry Silverman <barry@disus.com>
 
@@ -17,6 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with LambdaDelta.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+// Guard
+#ifndef VCMEM_H
+#define VCMEM_H
 
 void vcmem_init(int vn,int slot);
 void vcmem_clock_pulse(int vn);
@@ -110,3 +114,7 @@ struct vcmemState {
   // Software state
   uint8_t Card;
 };
+
+void vcmem_kb_int(int vn);
+
+#endif // VCMEM_H

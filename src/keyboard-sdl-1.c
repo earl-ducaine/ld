@@ -4,10 +4,14 @@
 #include <SDL_keysym.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "ld.h"
 #include "keyboard-sdl.h"
 #include "lambda_cpu.h"
+#include "tapemaster.h"
+#include "kernel.h"
+#include "vcmem.h"
 
 extern DisplayState* ds;
 
@@ -159,7 +163,7 @@ void kbd_handle_char(int symcode, int down) {
         lambda_dump(DUMP_ALL);
         FB_dump(0);
         FB_dump(1);
-      }else{
+      } else {
         tapemaster_open_next();
       }
     }
@@ -186,7 +190,7 @@ void kbd_handle_char(int symcode, int down) {
 	  SDL_WM_GrabInput(SDL_GRAB_OFF);
 	}
 	SDL_ShowCursor(SDL_ENABLE);
-      }else{
+      } else {
 	mouse_capture = 1;
 	if(mouse_op_mode == 0) {
 	  SDL_WM_GrabInput(SDL_GRAB_ON);
@@ -351,7 +355,7 @@ void sdl_send_mouse_event(void){
       put_mouse_rx_ring(active_console,0x80|buttons); // Buttons
       put_mouse_rx_ring(active_console,xm&0xFF);
       put_mouse_rx_ring(active_console,ym&0xFF);
-    }else{
+    } else {
       put_mouse_rx_ring(active_console,xm&0xFF);
       put_mouse_rx_ring(active_console,ym&0xFF);
     }
@@ -383,7 +387,7 @@ void sdl_send_mouse_event(void){
       put_mouse_rx_ring(active_console,0);
       mouse_phase ^= 1;
       mouse_last_buttons = buttons;
-    }else{
+    } else {
       // No, update position
       pS[active_console].Amemory[mouse_x_loc[active_console]] = 0xA000000|xm;
       pS[active_console].Amemory[mouse_y_loc[active_console]] = 0xA000000|ym;
@@ -423,7 +427,7 @@ void set_bow_mode(int vn,int mode){
     }
     // Refresh display
     SDL_UpdateRect(screen, 0, 0, video_width, video_height);
-  }else{
+  } else {
     for (i = 0; i < video_width; i++) {
       for (j = 0; j < video_height; j++) {
 	*p = (*p == pixel_off ? pixel_on : pixel_off);
@@ -457,7 +461,7 @@ void send_accumulated_updates(void){
   u_maxv = 0;
 }
 
-void sdl_refresh(void){
+void sdl_refresh(){
   SDL_Event ev1, *ev = &ev1;
 
   send_accumulated_updates();
@@ -510,17 +514,6 @@ void sdl_cleanup(void){
   SDL_Quit();
 }
 
-// Timer callback
-uint32_t sdl_timer_callback(uint32_t interval,
-			    void *param __attribute__ ((unused))) {
-  // Real time passed
-  real_time++;
-  // Also increment status update counter
-  stat_time++;
-  // Return next interval
-  return interval;
-}
-
 int sdl_init(int width, int height) {
   int i,
     j;
@@ -528,7 +521,7 @@ int sdl_init(int width, int height) {
   video_height = height;
   if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE)) {
     fprintf(stderr, "SDL initialization failed\n");
-    exit -1;
+    exit(-1);
   }
   /* NOTE: we still want Ctrl-C to work - undo the SDL redirections*/
   signal(SIGINT, SIG_DFL);

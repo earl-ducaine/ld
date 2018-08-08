@@ -882,17 +882,16 @@ void debug_init() {
     debug_addr.sin_port = htons(3636);
 
     // Bind
-    if (bind(debug_fd,(struct sockaddr *)&debug_addr,sizeof(debug_addr)) < 0) {
+    if (bind(debug_fd, (struct sockaddr *) &debug_addr, sizeof(debug_addr))
+	< 0) {
       perror("debug_init(): bind()");
       close(debug_fd);
       debug_fd = -1;
       return;
     }
-
     // Listen
     listen(debug_fd,5);
   }
-
   // All done!
   return;
 }
@@ -903,7 +902,6 @@ void debug_connect() {
   struct sockaddr_in target_addr;
   if (debug_fd < 0) { return; }
   if (debug_conn_fd > 0) { return; } // Already connected!
-
   target = gethostbyname(debug_target_host);
   if (target == NULL) {
     perror("debug_connect(): gethostbyname()");
@@ -1054,7 +1052,7 @@ void debug_clockpulse() {
       Remote_Data.byte[2] = debug_rx_buf[7];
       Remote_Data.byte[3] = debug_rx_buf[8];
       // printf("DEBUG: Got RQ 0x%.2X Addr 0x%.8X Data 0x%.8X\n",debug_rx_buf[0],Remote_Addr.raw,Remote_Data.word);
-      nubus_io_request(debug_rx_buf[0],0xF0,Remote_Addr.raw,Remote_Data.word);
+      nubus_io_request(debug_rx_buf[0], 0xF0, Remote_Addr.raw, Remote_Data.word);
     }
     debug_io_state++;
   case 3: // Await completion
@@ -1070,10 +1068,14 @@ void debug_clockpulse() {
       // Bus still busy?
       if (NUbus_Busy == 0) {
 	// No, our transaction failed
-	printf("DEBUG: BUS TIMEOUT while handing RQ 0x%.2X Addr 0x%.8X Data 0x%.8X\n",NUbus_Request,NUbus_Address.raw,NUbus_Data.word);
+	printf("DEBUG: BUS TIMEOUT while handing RQ 0x%.2X Addr 0x%.8X Data 0x%.8X\n",
+	       NUbus_Request,
+	       NUbus_Address.raw,
+	       NUbus_Data.word);
 	// printf("DEBUG: BUS TIMEOUT?\n");
 	debug_tx_rq(0xFF,NUbus_Address.raw,0);
-	debug_io_state = 0; // Ready for next packet
+	// Ready for next packet
+	debug_io_state = 0;
       }
       return;
     }
@@ -1390,6 +1392,8 @@ void nubus_cycle(int sdu) {
   icount++; // Main cycle
 }
 
+void lam_main_pulse();
+
 // Main entry point.
 int lam_main(int argc, char *argv[]) {
   FILE *config;
@@ -1418,12 +1422,12 @@ int lam_main(int argc, char *argv[]) {
     int x = 1;
     while (x < argc) {
 #ifdef BURR_BROWN
-      if (strcmp("-d",argv[x]) == 0) {
+      if (strcmp("-d", argv[x]) == 0) {
 	debug_target_mode = 10;
 	printf("DEBUG TARGET MODE 10\n");
       }
 #endif
-      if (strcmp("-?",argv[x]) == 0) {
+      if (strcmp("-?", argv[x]) == 0) {
         printf("\nUsage: ld [OPTIONS]\n");
         printf("Valid options:\n");
 #ifdef BURR_BROWN
@@ -1448,13 +1452,13 @@ int lam_main(int argc, char *argv[]) {
   debug_init();
   // Ethernet initialization
   /* OBSOLETED WHEN 3COM SPLIT
-  if (debug_target_mode < 10) {
-    ether_fd = enet_init();
-    if (ether_fd < 0) {
-      perror("enet_init()");
-      ether_fd = -1;
-    }
-  }
+     if (debug_target_mode < 10) {
+     ether_fd = enet_init();
+     if (ether_fd < 0) {
+     perror("enet_init()");
+     ether_fd = -1;
+     }
+     }
   */
   // SDL display initialization
   if (debug_target_mode < 10) {
@@ -1474,11 +1478,11 @@ int lam_main(int argc, char *argv[]) {
 #else
   // Ethernet initialization
   /*
-  ether_fd = enet_init();
-  if (ether_fd < 0) {
+    ether_fd = enet_init();
+    if (ether_fd < 0) {
     perror("enet_init()");
     ether_fd = -1;
-  }
+    }
   */
   // SDL display initialization
   sdl_init(VIDEO_WIDTH, VIDEO_HEIGHT);
@@ -1500,98 +1504,9 @@ int lam_main(int argc, char *argv[]) {
       usleep(0);
     }
   }
+  //
   while (ld_die_rq == 0) {
-    // New loop
-    // Don't clobber extra cycles if they happened
-    icount -= 500000;
-    // Run for 1/10th of a second, or 100000 cycles
-    while (icount < 500000 && ld_die_rq == 0) {
-      int x=0;
-      // Lambda runs at 5 MHz, so it gets 5 cycles
-      while (x < 5 && ld_die_rq == 0) {
-#ifdef BURR_BROWN
-	// Clock debug interface
-        debug_clockpulse();
-#endif
-	if (x == 0) {
-	  // The 8088 does more than one cycle worth of work in one
-	  // tick, so we clock it here. 1 MIPS was as fast as an 8088
-	  // got.
-	  //
-	  // NB: This will cause nubus cycles if the 8088 has to wait
-	  // for the bus!
-	  i8086_clockpulse();
-	}
-	// Step lambda and nubus (8088 might have already done this!)
-	nubus_cycle(0);
-	x++;
-      }
-      // icount++;
-    }
-    // Redraw display and process input
-    sdl_refresh();
-    // Plumb SDU console
-    if (sdu_rotary_switch != 1) {
-      sdu_cons_clockpulse();
-    }
-    // Update status line
-    if (stat_time > 9) {
-      char statbuf[512];
-      // Update status line
-      extern char tape_fn[];
-      sprintf(statbuf, "LambdaDelta: VC %d | Tape: %s | ",
-	      active_console, tape_fn);
-      switch(cp_state[active_console]) {
-      case 0:
-	// Cold (or under 8088 control!)
-	if (pS[active_console].cpu_die_rq) {
-	  sprintf(statbuf,"%sCold Halted",statbuf);
-	} else {
-	  sprintf(statbuf,"%sCold Running",statbuf);
-	}
-	break;
-      case 1:
-	// Bootstrapping
-	if (pS[active_console].cpu_die_rq) {
-	  sprintf(statbuf,"%sCold Halted",statbuf);
-	} else {
-	  sprintf(statbuf,"%sCold Booting",statbuf);
-	}
-	break;
-      case 2: // Lisp Booting
-	if (pS[active_console].cpu_die_rq) {
-	  sprintf(statbuf,"%sLisp Boot Halted",statbuf);
-	} else {
-	  sprintf(statbuf,"%sLisp Booting",statbuf);
-	}
-	break;
-      case 3: // Lisp Running
-	if (pS[active_console].cpu_die_rq) {
-	  sprintf(statbuf,"%sHalted",statbuf);
-	} else {
-	  sprintf(statbuf,"%sRunning",statbuf);
-	}
-	break;
-      default: // ???
-	sprintf(statbuf, "%sUnknown State %d", statbuf, cp_state[active_console]);
-	break;
-      }
-      sprintf(statbuf,"%s | DT %ld", statbuf, (emu_time - real_time));
-      set_caption(statbuf);
-      stat_time = 0;
-    }
-    // Emulated time passed
-    emu_time++;
-    // Timer won't wrap for many years, so we don't have to care about that
-    // Are we ahead of real time?
-    if (emu_time > real_time) {
-      // Yes, wait.
-      while (emu_time > real_time) {
-	// Allow real time to pass
-	usleep(1);
-      }
-    }
-    // Otherwise loop
+    lam_main_pulse();
   }
   // Save framebuffer image
 #ifdef BURR_BROWN
@@ -1614,4 +1529,96 @@ int lam_main(int argc, char *argv[]) {
   // It will not return.
   sdl_cleanup();
   return 0;
+}
+
+void lam_main_pulse() {
+  // New loop iteration, don't clobber extra cycles if they happened.
+  icount -= 500000;
+  // Run for 1/10th of a second, or 100000 cycles
+  while (icount < 500000 && ld_die_rq == 0) {
+    int x=0;
+    // Lambda runs at 5 MHz, so it gets 5 cycles
+    while (x < 5 && ld_die_rq == 0) {
+#ifdef BURR_BROWN
+      // Clock debug interface
+      debug_clockpulse();
+#endif
+      if (x == 0) {
+	// The 8088 does more than one cycle worth of work in one
+	// tick, so we clock it here. 1 MIPS was as fast as an 8088
+	// got.
+	// NB: This will cause nubus cycles if the 8088 has to wait
+	// for the bus!
+	i8086_clockpulse();
+      }
+      // Step lambda and nubus (8088 might have already done this!)
+      nubus_cycle(0);
+      x++;
+    }
+    // icount++;
+  }
+  // Redraw display and process input
+  sdl_refresh();
+  // Plumb SDU console
+  if (sdu_rotary_switch != 1) {
+    sdu_cons_clockpulse();
+  }
+  // Update status line
+  if (stat_time > 9) {
+    char statbuf[512];
+    // Update status line
+    extern char tape_fn[];
+    sprintf(statbuf, "LambdaDelta: VC %d | Tape: %s | ",
+	    active_console, tape_fn);
+    switch(cp_state[active_console]) {
+    case 0:
+      // Cold (or under 8088 control!)
+      if (pS[active_console].cpu_die_rq) {
+	sprintf(statbuf,"%sCold Halted",statbuf);
+      } else {
+	sprintf(statbuf,"%sCold Running",statbuf);
+      }
+      break;
+    case 1:
+      // Bootstrapping
+      if (pS[active_console].cpu_die_rq) {
+	sprintf(statbuf, "%sCold Halted", statbuf);
+      } else {
+	sprintf(statbuf, "%sCold Booting", statbuf);
+      }
+      break;
+    case 2: // Lisp Booting
+      if (pS[active_console].cpu_die_rq) {
+	sprintf(statbuf, "%sLisp Boot Halted", statbuf);
+      } else {
+	sprintf(statbuf, "%sLisp Booting", statbuf);
+      }
+      break;
+    case 3: // Lisp Running
+      if (pS[active_console].cpu_die_rq) {
+	sprintf(statbuf, "%sHalted",statbuf);
+      } else {
+	sprintf(statbuf, "%sRunning",statbuf);
+      }
+      break;
+    default: // ???
+      sprintf(statbuf, "%sUnknown State %d", statbuf, cp_state[active_console]);
+      break;
+    }
+    sprintf(statbuf,"%s | DT %ld", statbuf, (emu_time - real_time));
+    set_caption(statbuf);
+    stat_time = 0;
+  }
+  // Emulated time passed
+  emu_time++;
+  // Timer won't wrap for many years, so we don't have to care about that
+  // Are we ahead of real time?
+  if (emu_time > real_time) {
+    // Yes, wait.
+    while (emu_time > real_time) {
+      // Allow real time to pass
+      usleep(1);
+    }
+  }
+  // Otherwise loop
 }
