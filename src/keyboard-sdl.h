@@ -88,5 +88,7 @@ void sdl_refresh();
 uint32_t sdl_timer_callback(uint32_t interval,
 			    void *param __attribute__ ((unused)));
 
+void itimer_callback(int signum __attribute__ ((unused)));
+void lam_callback();
 
 #endif // KEYBOARD_SDL_H

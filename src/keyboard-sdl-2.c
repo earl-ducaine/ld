@@ -4,10 +4,13 @@
 #include <SDL_keycode.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "ld.h"
 #include "keyboard-sdl.h"
 #include "lambda_cpu.h"
+#include "tapemaster.h"
+#include "kernel.h"
 
 // Processor states
 extern struct lambdaState pS[];
@@ -110,20 +113,15 @@ void init_sdl_to_scancode_map(void) {
   // SDL_SCANCODE_F10 = MOUSE MODE SWITCH
   // SDL_SCANCODE_F11 = RETURN TO NEWBOOT
   // SDL_SCANCODE_F12 = SWITCH TAPE / DUMP
-
   map[SDL_SCANCODE_CAPSLOCK] = 0x03; // CAPSLOCK
-
   map[SDL_SCANCODE_RSHIFT] = 0025; // RIGHT SHIFT
   map[SDL_SCANCODE_LSHIFT] = 0024; // LEFT SHIFT
-
   map[SDL_SCANCODE_RCTRL] = 0044; // RIGHT CTRL is 0026, but we want LEFT GREEK which is 0044
   map[SDL_SCANCODE_LCTRL] = 0020; // LEFT CTRL
   map[SDL_SCANCODE_RALT] = 0005; // LEFT SUPER, was 0165 = RIGHT ALT (META)
   map[SDL_SCANCODE_LALT] = 0045; // LEFT ALT (META)
-
   map[SDL_SCANCODE_RGUI] = 0065; // RIGHT windows (SUPER)
   map[SDL_SCANCODE_LGUI] = 0005; // LEFT windows (SUPER)
-
   // Default modifier map
   modmap[SDL_SCANCODE_LSHIFT] = KB_BB_LSHIFT;
   modmap[SDL_SCANCODE_RSHIFT] = KB_BB_RSHIFT;
@@ -134,27 +132,65 @@ void init_sdl_to_scancode_map(void) {
   modmap[SDL_SCANCODE_APPLICATION] = KB_BB_RHYPER;
 }
 
-void kbd_handle_char(int scancode, int down) {
-  int sdlchar = scancode;
+// New timer callback because SDL2's interval timer sucks
+void itimer_callback(int signum __attribute__ ((unused))) {
+  lam_callback();
+  return;
+}
+
+void kbd_handle_char(uint code, int down);
+
+bool use_scancode = 1;
+
+// Dynamically determine whethger we use scancode or keycode
+static void sdl_process_key(SDL_Event* ev, int updown) {
+  if (use_scancode) {
+    // if (ev->key.keysym.scancode != SDL_GetScancodeFromKey(ev->key.keysym.sym)) {
+      printf("Physical %s(%c) key acting as %s(%c) key",
+	     SDL_GetScancodeName(ev->key.keysym.scancode),
+	     SDL_GetScancodeName(ev->key.keysym.scancode)[0],
+	     SDL_GetKeyName(ev->key.keysym.sym),
+	     SDL_GetKeyName(ev->key.keysym.sym)[0]);
+      //}
+    kbd_handle_char(ev->key.keysym.scancode, updown);
+  } else {
+    kbd_handle_char(ev->key.keysym.sym, updown);
+  }
+}
+
+SDL_Scancode LAM_CODE_F12 = SDL_SCANCODE_F12;
+SDL_Scancode LAM_CODE_F11 = SDL_SCANCODE_F11;
+SDL_Scancode LAM_CODE_F10 = SDL_SCANCODE_F10;
+SDL_Scancode LAM_CODE_F9 = SDL_SCANCODE_F9;
+// SDL_SCANCODE_F9
+
+const char* get_lam_code_char(uint code) {
+  return SDL_GetScancodeName(code);
+}
+
+void kbd_handle_char(uint code, int down) {
+  // uint sdlchar = (get_lam_code_char(code))[0];
+  uint sdlchar_bak = (get_lam_code_char(code))[0];
+  uint sdlchar = code;
+  printf("scancode: %d, charecter: %d\n", code, sdlchar_bak);
   unsigned char outchar = 0;
   // Check for debug
-  if (sdlchar == SDL_SCANCODE_F12) {
+  if (code == LAM_CODE_F12) {
     if (down) {
       if (((kb_buckybits & KB_BB_LSHIFT) |
-	   (kb_buckybits & KB_BB_RSHIFT)) !=
-	  0) {
+	   (kb_buckybits & KB_BB_RSHIFT)) != 0) {
         printf("DEBUG: DUMP REQUESTED FROM CONSOLE\n");
         lambda_dump(DUMP_ALL);
         FB_dump(0);
         FB_dump(1);
-      }else{
+      } else {
         tapemaster_open_next();
       }
     }
     return;
   }
   // Check for return-to-newboot key
-  if (sdlchar == SDL_SCANCODE_F11) {
+  if (code == LAM_CODE_F11) {
     // Keystroke is control-meta-control-meta-<LINE>
     // 0020 0045 0026 0165 0036
     if (down) {
@@ -166,16 +202,16 @@ void kbd_handle_char(int scancode, int down) {
     return;
   }
   // Check for decapture/pointer-hide-show key
-  if (sdlchar == SDL_SCANCODE_F10) {
+  if (code == LAM_CODE_F10) {
     if (down) {
       if (mouse_capture != 0) {
-        mouse_capture = 0;
+	mouse_capture = 0;
 	if (mouse_op_mode == 0) {
 	  SDL_SetRelativeMouseMode(SDL_FALSE);
 	}
 	SDL_ShowCursor(SDL_ENABLE);
       } else {
-        mouse_capture = 1;
+	mouse_capture = 1;
 	if (mouse_op_mode == 0) {
 	  SDL_SetRelativeMouseMode(SDL_TRUE);
 	}
@@ -185,7 +221,7 @@ void kbd_handle_char(int scancode, int down) {
   }
   // Check for console switch key
 #ifdef CONFIG_2X2
-  if (sdlchar == SDL_SCANCODE_F9) {
+  if (code == LAM_CODE_F9) {
     if (down) {
       // Switch active console
       active_console ^= 1;
@@ -221,10 +257,9 @@ void kbd_handle_char(int scancode, int down) {
     return;
   }
 #endif
-
   // For now, fold lower case to upper case (because we're ignoring
   // modifiers)
-  if (sdlchar >= 'a' && sdlchar <= 'z'){
+  if (sdlchar >= 'a' && sdlchar <= 'z') {
     sdlchar -= ' ';
   }
   // Obtain keymap entry
@@ -246,19 +281,19 @@ void kbd_handle_char(int scancode, int down) {
     if (((kb_buckybits&KB_BB_LSHIFT)|(kb_buckybits&KB_BB_RSHIFT)) != 0) {
       outchar |= 0x20;
     }
-    if (((kb_buckybits&KB_BB_LCTL)|(kb_buckybits&KB_BB_RCTL)) != 0){
+    if (((kb_buckybits&KB_BB_LCTL)|(kb_buckybits&KB_BB_RCTL)) != 0) {
       outchar |= 0x10;
     }
-    if (((kb_buckybits&KB_BB_LMETA)|(kb_buckybits&KB_BB_RMETA)) != 0){
+    if (((kb_buckybits&KB_BB_LMETA)|(kb_buckybits&KB_BB_RMETA)) != 0) {
       outchar |= 0x08;
     }
-    if (((kb_buckybits&KB_BB_LSUPER)|(kb_buckybits&KB_BB_RSUPER)) != 0){
+    if (((kb_buckybits&KB_BB_LSUPER)|(kb_buckybits&KB_BB_RSUPER)) != 0) {
       outchar |= 0x04;
     }
-    if (((kb_buckybits&KB_BB_LHYPER)|(kb_buckybits&KB_BB_RHYPER)) != 0){
+    if (((kb_buckybits&KB_BB_LHYPER)|(kb_buckybits&KB_BB_RHYPER)) != 0) {
       outchar |= 0x02;
     }
-    if ((kb_buckybits&KB_BB_GREEK) != 0){
+    if ((kb_buckybits&KB_BB_GREEK) != 0) {
       outchar |= 0x01;
     }
   } else {
@@ -267,19 +302,19 @@ void kbd_handle_char(int scancode, int down) {
       kb_buckybits &= ~modmap[sdlchar];
     }
     // Take "up" bucky bits
-    if((kb_buckybits&KB_BB_MODELOCK) != 0){
+    if ((kb_buckybits&KB_BB_MODELOCK) != 0) {
       outchar |= 0x10;
     }
-    if((kb_buckybits&KB_BB_ALTLOCK) != 0){
+    if ((kb_buckybits&KB_BB_ALTLOCK) != 0) {
       outchar |= 0x08;
     }
-    if((kb_buckybits&KB_BB_CAPSLOCK) != 0){
+    if ((kb_buckybits&KB_BB_CAPSLOCK) != 0) {
       outchar |= 0x04;
     }
-    if((kb_buckybits&KB_BB_REPEAT) != 0){
+    if ((kb_buckybits&KB_BB_REPEAT) != 0) {
       outchar |= 0x02;
     }
-    if(((kb_buckybits&KB_BB_LTOP)|(kb_buckybits&KB_BB_RTOP)) != 0){
+    if (((kb_buckybits&KB_BB_LTOP)|(kb_buckybits&KB_BB_RTOP)) != 0) {
       outchar |= 0x01;
     }
   }
@@ -293,11 +328,7 @@ void sdl_system_shutdown_request(void) {
   exit(0);
 }
 
-static void sdl_process_key(SDL_KeyboardEvent* ev, int updown) {
-  kbd_handle_char(ev->keysym.scancode, updown);
-}
-
-static void sdl_send_mouse_event(void) {
+void sdl_send_mouse_event(void) {
   int state,
     xm,
     ym;
@@ -306,7 +337,7 @@ static void sdl_send_mouse_event(void) {
     // Direct Mode
     state = SDL_GetRelativeMouseState(&xm, &ym);
     // Disregard mouse when not captured, unless we are recapturing it.
-    if(mouse_capture == 0 && (state & SDL_BUTTON(SDL_BUTTON_LEFT))) {
+    if (mouse_capture == 0 && (state & SDL_BUTTON(SDL_BUTTON_LEFT))) {
       mouse_capture = 2;
       return;
     }
@@ -318,21 +349,21 @@ static void sdl_send_mouse_event(void) {
     if (mouse_capture != 1) {
       return;
     }
-    // if(!mouse_init){ return; }
-    if (cp_state[active_console] != 3){
+    // if (!mouse_init) { return; }
+    if (cp_state[active_console] != 3) {
       return;
     }
     // Proceed
-    if (state & SDL_BUTTON(SDL_BUTTON_LEFT)){
+    if (state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
       buttons ^= 0x04;
     }
-    if (state & SDL_BUTTON(SDL_BUTTON_MIDDLE)){
+    if (state & SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
       buttons ^= 0x02;
     }
-    if (state & SDL_BUTTON(SDL_BUTTON_RIGHT)){
+    if (state & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
       buttons ^= 0x01;
     }
-    if((mouse_phase == 1) && (buttons != mouse_last_buttons)) {
+    if ((mouse_phase == 1) && (buttons != mouse_last_buttons)) {
       put_mouse_rx_ring(active_console, 0);
       put_mouse_rx_ring(active_console, 0);
       mouse_phase ^= 1;
@@ -342,48 +373,48 @@ static void sdl_send_mouse_event(void) {
     // Scale movement
     xm /= 2;
     ym /= 2;
-    if (xm == 0 && ym == 0 && buttons == mouse_last_buttons){
+    if (xm == 0 && ym == 0 && buttons == mouse_last_buttons) {
       return;
     }
     // printf("MOUSE: Movement: %d/%d buttons 0x%.2x\n",xm,ym,buttons);
     // Construct mouse packet and send it
-    if(mouse_phase == 0){
+    if (mouse_phase == 0) {
       put_mouse_rx_ring(active_console,0x80|buttons); // Buttons
       put_mouse_rx_ring(active_console,xm&0xFF);
       put_mouse_rx_ring(active_console,ym&0xFF);
-    }else{
+    } else {
       put_mouse_rx_ring(active_console,xm&0xFF);
       put_mouse_rx_ring(active_console,ym&0xFF);
     }
     mouse_phase ^= 1;
     mouse_last_buttons = buttons;
   }
-  if(mouse_op_mode == 1){
+  if (mouse_op_mode == 1) {
     // Shared Mode
     // If lisp is not running, return
-    if(cp_state[active_console] != 3){ return; }
+    if (cp_state[active_console] != 3) { return; }
     state = SDL_GetMouseState(&xm, &ym);
     // If the inhibit counter is nonzero, throw away this update (it's fake)
-    if(mouse_update_inhibit > 0){ mouse_update_inhibit--; return; }
+    if (mouse_update_inhibit > 0) { mouse_update_inhibit--; return; }
     // Otherwise, proceed
-    if (state & SDL_BUTTON(SDL_BUTTON_LEFT)){ buttons ^= 0x04; }
-    if (state & SDL_BUTTON(SDL_BUTTON_MIDDLE)){ buttons ^= 0x02; }
-    if (state & SDL_BUTTON(SDL_BUTTON_RIGHT)){ buttons ^= 0x01; }
+    if (state & SDL_BUTTON(SDL_BUTTON_LEFT)) { buttons ^= 0x04; }
+    if (state & SDL_BUTTON(SDL_BUTTON_MIDDLE)) { buttons ^= 0x02; }
+    if (state & SDL_BUTTON(SDL_BUTTON_RIGHT)) { buttons ^= 0x01; }
     // printf("MOUSE: Movement: %d/%d buttons 0x%.2x\n",xm,ym,buttons);
     // Do we need to update buttons?
-    if(buttons != mouse_last_buttons){
+    if (buttons != mouse_last_buttons) {
       // Yes - Generate a mouse packet (no movement, just buttons)
-      if(mouse_phase == 1){
-        put_mouse_rx_ring(active_console,0);
-        put_mouse_rx_ring(active_console,0);
-        mouse_phase ^= 1;
+      if (mouse_phase == 1) {
+	put_mouse_rx_ring(active_console,0);
+	put_mouse_rx_ring(active_console,0);
+	mouse_phase ^= 1;
       }
       put_mouse_rx_ring(active_console,0x80|buttons); // Buttons
       put_mouse_rx_ring(active_console,0);
       put_mouse_rx_ring(active_console,0);
       mouse_phase ^= 1;
       mouse_last_buttons = buttons;
-    }else{
+    } else {
       // No, update position
       pS[active_console].Amemory[mouse_x_loc[active_console]] = 0xA000000|xm;
       pS[active_console].Amemory[mouse_y_loc[active_console]] = 0xA000000|ym;
@@ -400,7 +431,7 @@ void warp_mouse_callback(int cp) {
     return;
   }
   // Are we the active window?
-  if((SDL_GetWindowFlags(SDLWindow) & SDL_WINDOW_MOUSE_FOCUS) == 0){
+  if ((SDL_GetWindowFlags(SDLWindow) & SDL_WINDOW_MOUSE_FOCUS) == 0) {
     return;
   }
   // Otherwise proceed
@@ -423,7 +454,7 @@ void set_bow_mode(int vn, int mode) {
   black_on_white[vn] = mode;
   // invert pixels
   uint32_t *p = FB_Image[active_console];
-  if(vn == active_console){
+  if (vn == active_console) {
     uint32_t *b = FrameBuffer;
     for (i = 0; i < VIDEO_WIDTH; i++) {
       for (j = 0; j < VIDEO_HEIGHT; j++) {
@@ -436,7 +467,7 @@ void set_bow_mode(int vn, int mode) {
     SDL_RenderClear(SDLRenderer);
     SDL_RenderCopy(SDLRenderer, SDLTexture, NULL, NULL);
     SDL_RenderPresent(SDLRenderer);
-  }else{
+  } else {
     for (i = 0; i < VIDEO_WIDTH; i++) {
       for (j = 0; j < VIDEO_HEIGHT; j++) {
 	*p = ((*p == pixel_off) ? pixel_on : pixel_off);
@@ -446,7 +477,7 @@ void set_bow_mode(int vn, int mode) {
   }
 }
 
-void accumulate_update(int h, int v, int hs, int vs){
+void accumulate_update(int h, int v, int hs, int vs) {
   if (h < u_minh) u_minh = h;
   if (h+hs > u_maxh) u_maxh = h+hs;
   if (v < u_minv) u_minv = v;
@@ -470,13 +501,13 @@ void sdl_refresh() {
       // Instead of this cause the entire screen to update regardless of the accumulated coordinates.
       break;
     case SDL_KEYDOWN:
-      sdl_process_key(&ev->key, 1);
+      sdl_process_key(ev, 1);
       break;
     case SDL_KEYUP:
-      sdl_process_key(&ev->key, 0);
+      sdl_process_key(ev, 0);
       break;
     case SDL_QUIT:
-      if(quit_on_sdl_quit != 0){
+      if (quit_on_sdl_quit != 0) {
 	sdl_system_shutdown_request();
       }
       break;
@@ -494,14 +525,14 @@ void sdl_refresh() {
 }
 
 void sdl_cleanup(void) {
-  if(mouse_op_mode == 0){
+  if (mouse_op_mode == 0) {
     SDL_SetRelativeMouseMode(SDL_FALSE);
   }
   SDL_ShowCursor(SDL_ENABLE);
-  if(sdu_conn_fd > 0){
+  if (sdu_conn_fd > 0) {
     close(sdu_conn_fd);
   }
-  if(sdu_fd > 0){
+  if (sdu_fd > 0) {
     close(sdu_fd);
   }
   write_nvram();
@@ -509,15 +540,7 @@ void sdl_cleanup(void) {
   SDL_Quit();
 }
 
-// New timer callback because SDL2's interval timer sucks
-static void itimer_callback(int signum __attribute__ ((unused))){
-  // Real time passed
-  real_time++;
-  // Also increment status update counter
-  stat_time++;
-}
-
-int sdl_init(int width, int height){
+int sdl_init(int width, int height) {
   int flags;
   int i,j;
   struct sigaction sigact;
@@ -540,23 +563,23 @@ int sdl_init(int width, int height){
                                SDL_WINDOWPOS_CENTERED,
                                width, height,
                                0);
-  if(SDLWindow == NULL){
+  if (SDLWindow == NULL) {
     printf("SDL_CreateWindow(): %s\n",SDL_GetError());
     return(-1);
   }
   // And renderer
   SDLRenderer = SDL_CreateRenderer(SDLWindow, -1, 0);
-  if(SDLRenderer == NULL){
+  if (SDLRenderer == NULL) {
     printf("SDL_CreateRenderer(): %s\n",SDL_GetError());
     return(-1);
   }
   // Obtain icon. It must be a 32x32 pixel 256-color BMP image. RGB 255,0,255 is used for transparency.
   SDL_Surface* icon = SDL_LoadBMP("icon.bmp");
-  if(icon != NULL){
+  if (icon != NULL) {
     SDL_SetColorKey(icon, SDL_TRUE, SDL_MapRGB(icon->format, 255, 0, 255));
     SDL_SetWindowIcon(SDLWindow, icon);
     SDL_FreeSurface(icon);
-  }else{
+  } else {
     printf("Failed to open icon.bmp");
   }
   // Do some setting
@@ -568,7 +591,7 @@ int sdl_init(int width, int height){
                                  SDL_PIXELFORMAT_ARGB8888,
                                  SDL_TEXTUREACCESS_STREAMING,
                                  width, height);
-  if(SDLTexture == NULL){
+  if (SDLTexture == NULL) {
     printf("SDL_CreateTexture(): %s\n",SDL_GetError());
     return(-1);
   }
@@ -586,17 +609,17 @@ int sdl_init(int width, int height){
       *p++ = pixel_off;
   }
   // Grab the mouse if we are in direct mode
-  if(mouse_op_mode == 0){
+  if (mouse_op_mode == 0) {
     SDL_SetRelativeMouseMode(SDL_TRUE);
   }
   SDL_ShowCursor(SDL_DISABLE);
   // Kick interval timer
   /*
-  SDLTimer = SDL_AddTimer(100,sdl_timer_callback,NULL);
-  if(SDLTimer == 0){
+    SDLTimer = SDL_AddTimer(100,sdl_timer_callback,NULL);
+    if (SDLTimer == 0) {
     fprintf(stderr,"Unable to start interval timer\n");
     exit(-1);
-  }
+    }
   */
   struct itimerval itv;
   bzero((uint8_t *)&itv,sizeof(struct itimerval));
@@ -608,7 +631,7 @@ int sdl_init(int width, int height){
 }
 
 // Framebuffer management
-void framebuffer_update_word(int vn,uint32_t addr,uint32_t data){
+void framebuffer_update_word(int vn,uint32_t addr,uint32_t data) {
   // Given 1BPP data and a vcmem framebuffer address, translate to 32BPP and write to host
   uint32_t row,col;  // Row and column of guest write
   uint32_t outpos;   // Actual host FB offset
@@ -617,25 +640,25 @@ void framebuffer_update_word(int vn,uint32_t addr,uint32_t data){
   row = (col/1024);  // Obtain row
   col -= (row*1024); // Remove row pixels
   outpos = col+(VIDEO_WIDTH*row);
-  if(outpos >= (uint32_t)(VIDEO_WIDTH*VIDEO_HEIGHT)){
+  if (outpos >= (uint32_t)(VIDEO_WIDTH*VIDEO_HEIGHT)) {
     return;
   }
-  if(active_console == vn){
-    while(mask < 0x100000000LL){
-      if((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)){
+  if (active_console == vn) {
+    while(mask < 0x100000000LL) {
+      if ((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)) {
 	FB_Image[vn][outpos] = FrameBuffer[outpos] = pixel_on;
-      }else{
+      } else {
 	FB_Image[vn][outpos] = FrameBuffer[outpos] = pixel_off;
       }
       outpos++;
       mask <<= 1;
     }
     accumulate_update(col, row, 32, 1);
-  }else{
-    while(mask < 0x100000000LL){
-      if((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)){
+  } else {
+    while(mask < 0x100000000LL) {
+      if ((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)) {
         FB_Image[vn][outpos] = pixel_on;
-      }else{
+      } else {
         FB_Image[vn][outpos] = pixel_off;
       }
       outpos++;
@@ -644,7 +667,7 @@ void framebuffer_update_word(int vn,uint32_t addr,uint32_t data){
   }
 }
 
-void framebuffer_update_hword(int vn,uint32_t addr,uint16_t data){
+void framebuffer_update_hword(int vn,uint32_t addr,uint16_t data) {
   uint32_t row,col;  // Row and column of guest write
   uint32_t outpos;   // Actual host FB offset
   uint64_t mask = 1; // Mask for pixel state
@@ -652,25 +675,25 @@ void framebuffer_update_hword(int vn,uint32_t addr,uint16_t data){
   row = (col/1024);  // Obtain row
   col -= (row*1024); // Remove row pixels
   outpos = col+(VIDEO_WIDTH*row);
-  if(outpos >= (uint32_t)(VIDEO_WIDTH*VIDEO_HEIGHT)){
+  if (outpos >= (uint32_t)(VIDEO_WIDTH*VIDEO_HEIGHT)) {
     return;
   }
-  if(active_console == vn){
-    while(mask < 0x10000){
-      if((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)){
+  if (active_console == vn) {
+    while(mask < 0x10000) {
+      if ((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)) {
 	FB_Image[vn][outpos] = FrameBuffer[outpos] = pixel_on;
-      }else{
+      } else {
 	FB_Image[vn][outpos] = FrameBuffer[outpos] = pixel_off;
       }
       outpos++;
       mask <<= 1;
     }
     accumulate_update(col, row, 16, 1);
-  }else{
-    while(mask < 0x10000){
-      if((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)){
+  } else {
+    while(mask < 0x10000) {
+      if ((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)) {
 	FB_Image[vn][outpos] = pixel_on;
-      }else{
+      } else {
 	FB_Image[vn][outpos] = pixel_off;
       }
       outpos++;
@@ -679,7 +702,7 @@ void framebuffer_update_hword(int vn,uint32_t addr,uint16_t data){
   }
 }
 
-void framebuffer_update_byte(int vn,uint32_t addr,uint8_t data){
+void framebuffer_update_byte(int vn,uint32_t addr,uint8_t data) {
   // Given 1BPP data and a vcmem framebuffer address, translate to 32BPP and write to host
   uint32_t row,col;  // Row and column of guest write
   uint32_t outpos;   // Actual host FB offset
@@ -688,25 +711,25 @@ void framebuffer_update_byte(int vn,uint32_t addr,uint8_t data){
   row = (col/1024);  // Obtain row
   col -= (row*1024); // Remove row pixels
   outpos = col+(VIDEO_WIDTH*row);
-  if(outpos >= (uint32_t)(VIDEO_WIDTH*VIDEO_HEIGHT)){
+  if (outpos >= (uint32_t)(VIDEO_WIDTH*VIDEO_HEIGHT)) {
     return;
   }
-  if(active_console == vn){
-    while(mask < 0x100){
-      if((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)){
+  if (active_console == vn) {
+    while(mask < 0x100) {
+      if ((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)) {
 	FB_Image[vn][outpos] = FrameBuffer[outpos] = pixel_on;
-      }else{
+      } else {
 	FB_Image[vn][outpos] = FrameBuffer[outpos] = pixel_off;
       }
       outpos++;
       mask <<= 1;
     }
     accumulate_update(col, row, 8, 1);
-  }else{
-    while(mask < 0x100){
-      if((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)){
+  } else {
+    while(mask < 0x100) {
+      if ((black_on_white[vn] == 0 && (data&mask) != mask) || (black_on_white[vn] == 1 && (data&mask) == mask)) {
         FB_Image[vn][outpos] = pixel_on;
-      }else{
+      } else {
         FB_Image[vn][outpos] = pixel_off;
       }
       outpos++;
@@ -723,5 +746,5 @@ void init_sdl_keyboard() {
 
 
 void set_caption(char statbuf[]) {
-      SDL_SetWindowTitle(SDLWindow, statbuf);
+  SDL_SetWindowTitle(SDLWindow, statbuf);
 }

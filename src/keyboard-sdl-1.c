@@ -24,9 +24,9 @@ SDL_TimerID SDLTimer;
 int video_width = VIDEO_WIDTH;
 int video_height = VIDEO_HEIGHT;
 
-void init_sdl_to_keysym_map(void){
+void init_sdl_to_keysym_map(void) {
   int x = 0;
-  while(x < 512){
+  while(x < 512) {
     map[x] = 0;
     modmap[x] = 0;
     x++;
@@ -150,11 +150,23 @@ void init_sdl_to_keysym_map(void){
   modmap[SDLK_MENU] = KB_BB_RHYPER;
 }
 
-void kbd_handle_char(int symcode, int down) {
-  int sdlchar = symcode;
+
+// Timer callback
+uint32_t sdl_timer_callback(uint32_t interval,
+			    void *param __attribute__ ((unused))) {
+  lam_callback();
+  // Real time passed
+  return(interval);
+}
+
+SDL_Scancode LAM_CODE_F12 = SDLK_F12;
+SDL_Scancode LAM_CODE_F11 = SDLK_F11;
+
+void kbd_handle_char(int code, int down) {
+  int sdlchar = code;
   unsigned char outchar = 0;
   // Check for debug
-  if(sdlchar == SDLK_F12){
+  if (sdlchar == LAM_CODE_F12) {
     if (down) {
       if (((kb_buckybits & KB_BB_LSHIFT) |
 	   (kb_buckybits & KB_BB_RSHIFT)) !=
@@ -170,7 +182,7 @@ void kbd_handle_char(int symcode, int down) {
     return;
   }
   // Check for return-to-newboot key
-  if(sdlchar == SDLK_F11){
+  if (sdlchar == LAM_CODE_F11) {
     // Keystroke is control-meta-control-meta-<LINE>
     // 0020 0045 0026 0165 0036
     if (down) {
@@ -182,17 +194,17 @@ void kbd_handle_char(int symcode, int down) {
     return;
   }
   // Check for decapture/pointer-hide-show key
-  if(sdlchar == SDLK_F10){
-    if(down) {
-      if(mouse_capture != 0) {
+  if (sdlchar == SDLK_F10) {
+    if (down) {
+      if (mouse_capture != 0) {
 	mouse_capture = 0;
-	if(mouse_op_mode == 0) {
+	if (mouse_op_mode == 0) {
 	  SDL_WM_GrabInput(SDL_GRAB_OFF);
 	}
 	SDL_ShowCursor(SDL_ENABLE);
       } else {
 	mouse_capture = 1;
-	if(mouse_op_mode == 0) {
+	if (mouse_op_mode == 0) {
 	  SDL_WM_GrabInput(SDL_GRAB_ON);
 	}
 	SDL_ShowCursor(SDL_DISABLE);
@@ -202,8 +214,8 @@ void kbd_handle_char(int symcode, int down) {
   }
   // Check for console switch key
 #ifdef CONFIG_2X2
-  if(sdlchar == SDLK_F9){
-    if(down) {
+  if (sdlchar == SDLK_F9) {
+    if (down) {
       // Switch active console
       active_console ^= 1;
       printf("CONSW: %d\n",active_console);
@@ -234,10 +246,9 @@ void kbd_handle_char(int symcode, int down) {
     return;
   }
 #endif
-
   // For now, fold lower case to upper case (because we're ignoring
   // modifiers)
-  if (sdlchar >= 'a' && sdlchar <= 'z'){
+  if (sdlchar >= 'a' && sdlchar <= 'z') {
     sdlchar -= ' ';
   }
   // Obtain keymap entry
@@ -259,19 +270,19 @@ void kbd_handle_char(int symcode, int down) {
     if (((kb_buckybits&KB_BB_LSHIFT)|(kb_buckybits&KB_BB_RSHIFT)) != 0) {
       outchar |= 0x20;
     }
-    if (((kb_buckybits&KB_BB_LCTL)|(kb_buckybits&KB_BB_RCTL)) != 0){
+    if (((kb_buckybits&KB_BB_LCTL)|(kb_buckybits&KB_BB_RCTL)) != 0) {
       outchar |= 0x10;
     }
-    if (((kb_buckybits&KB_BB_LMETA)|(kb_buckybits&KB_BB_RMETA)) != 0){
+    if (((kb_buckybits&KB_BB_LMETA)|(kb_buckybits&KB_BB_RMETA)) != 0) {
       outchar |= 0x08;
     }
-    if (((kb_buckybits&KB_BB_LSUPER)|(kb_buckybits&KB_BB_RSUPER)) != 0){
+    if (((kb_buckybits&KB_BB_LSUPER)|(kb_buckybits&KB_BB_RSUPER)) != 0) {
       outchar |= 0x04;
     }
-    if (((kb_buckybits&KB_BB_LHYPER)|(kb_buckybits&KB_BB_RHYPER)) != 0){
+    if (((kb_buckybits&KB_BB_LHYPER)|(kb_buckybits&KB_BB_RHYPER)) != 0) {
       outchar |= 0x02;
     }
-    if ((kb_buckybits&KB_BB_GREEK) != 0){
+    if ((kb_buckybits&KB_BB_GREEK) != 0) {
       outchar |= 0x01;
     }
   } else {
@@ -280,19 +291,19 @@ void kbd_handle_char(int symcode, int down) {
       kb_buckybits &= ~modmap[sdlchar];
     }
     // Take "up" bucky bits
-    if((kb_buckybits&KB_BB_MODELOCK) != 0){
+    if ((kb_buckybits&KB_BB_MODELOCK) != 0) {
       outchar |= 0x10;
     }
-    if((kb_buckybits&KB_BB_ALTLOCK) != 0){
+    if ((kb_buckybits&KB_BB_ALTLOCK) != 0) {
       outchar |= 0x08;
     }
-    if((kb_buckybits&KB_BB_CAPSLOCK) != 0){
+    if ((kb_buckybits&KB_BB_CAPSLOCK) != 0) {
       outchar |= 0x04;
     }
-    if((kb_buckybits&KB_BB_REPEAT) != 0){
+    if ((kb_buckybits&KB_BB_REPEAT) != 0) {
       outchar |= 0x02;
     }
-    if(((kb_buckybits&KB_BB_LTOP)|(kb_buckybits&KB_BB_RTOP)) != 0){
+    if (((kb_buckybits&KB_BB_LTOP)|(kb_buckybits&KB_BB_RTOP)) != 0) {
       outchar |= 0x01;
     }
   }
@@ -312,46 +323,55 @@ static void sdl_process_key(SDL_KeyboardEvent* ev, int updown) {
   kbd_handle_char(ev->keysym.sym, updown);
 }
 
-void sdl_send_mouse_event(void){
-  int state,xm,ym;
-  uint8_t buttons=0x07;
-  if(mouse_op_mode == 0){
+void sdl_send_mouse_event(void) {
+  int state,
+    xm,
+    ym;
+  uint8_t buttons = 0x07;
+  if (mouse_op_mode == 0) {
     // Direct Mode
     state = SDL_GetRelativeMouseState(&xm, &ym);
     // Disregard mouse when not captured, unless we are recapturing it.
-    if(mouse_capture == 0 && (state & SDL_BUTTON(SDL_BUTTON_LEFT))){
+    if (mouse_capture == 0 && (state & SDL_BUTTON(SDL_BUTTON_LEFT))) {
       mouse_capture = 2;
       return;
     }
-    if(mouse_capture == 2 && !(state & SDL_BUTTON(SDL_BUTTON_LEFT))){
+    if (mouse_capture == 2 && !(state & SDL_BUTTON(SDL_BUTTON_LEFT))) {
       mouse_capture = 1;
       SDL_WM_GrabInput(SDL_GRAB_ON);
       SDL_ShowCursor(SDL_DISABLE);
       return;
     }
-    if(mouse_capture != 1){
+    if (mouse_capture != 1) {
       return;
     }
-    if(cp_state[active_console] != 3){ return; }
+    if (cp_state[active_console] != 3) { return; }
     // Proceed
-    if (state & SDL_BUTTON(SDL_BUTTON_LEFT)){ buttons ^= 0x04; }
-    if (state & SDL_BUTTON(SDL_BUTTON_MIDDLE)){ buttons ^= 0x02; }
-    if (state & SDL_BUTTON(SDL_BUTTON_RIGHT)){ buttons ^= 0x01; }
-
-    if(mouse_phase == 1 && buttons != mouse_last_buttons){
-      put_mouse_rx_ring(active_console,0);
-      put_mouse_rx_ring(active_console,0);
+    if (state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+      buttons ^= 0x04;
+    }
+    if (state & SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
+      buttons ^= 0x02;
+    }
+    if (state & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
+      buttons ^= 0x01;
+    }
+    if ((mouse_phase == 1) && (buttons != mouse_last_buttons)) {
+      put_mouse_rx_ring(active_console, 0);
+      put_mouse_rx_ring(active_console, 0);
       mouse_phase ^= 1;
     }
-    // Construct packet
-    ym = -ym; // Y movement is reversed
+    // Construct packet -- Y movement is reversed
+    ym = -ym;
     // Scale movement
     xm /= 2;
     ym /= 2;
-    if(xm == 0 && ym == 0 && buttons == mouse_last_buttons){ return; }
+    if (xm == 0 && ym == 0 && buttons == mouse_last_buttons) {
+      return;
+    }
     // printf("MOUSE: Movement: %d/%d buttons 0x%.2x\n",xm,ym,buttons);
     // Construct mouse packet and send it
-    if(mouse_phase == 0){
+    if (mouse_phase == 0) {
       put_mouse_rx_ring(active_console,0x80|buttons); // Buttons
       put_mouse_rx_ring(active_console,xm&0xFF);
       put_mouse_rx_ring(active_console,ym&0xFF);
@@ -362,22 +382,22 @@ void sdl_send_mouse_event(void){
     mouse_phase ^= 1;
     mouse_last_buttons = buttons;
   }
-  if(mouse_op_mode == 1){
+  if (mouse_op_mode == 1) {
     // Shared Mode
     // If lisp is not running, return
-    if(cp_state[active_console] != 3){ return; }
+    if (cp_state[active_console] != 3) { return; }
     state = SDL_GetMouseState(&xm, &ym);
     // If the inhibit counter is nonzero, throw away this update (it's fake)
-    if(mouse_update_inhibit > 0){ mouse_update_inhibit--; return; }
+    if (mouse_update_inhibit > 0) { mouse_update_inhibit--; return; }
     // Otherwise, proceed
-    if (state & SDL_BUTTON(SDL_BUTTON_LEFT)){ buttons ^= 0x04; }
-    if (state & SDL_BUTTON(SDL_BUTTON_MIDDLE)){ buttons ^= 0x02; }
-    if (state & SDL_BUTTON(SDL_BUTTON_RIGHT)){ buttons ^= 0x01; }
+    if (state & SDL_BUTTON(SDL_BUTTON_LEFT)) { buttons ^= 0x04; }
+    if (state & SDL_BUTTON(SDL_BUTTON_MIDDLE)) { buttons ^= 0x02; }
+    if (state & SDL_BUTTON(SDL_BUTTON_RIGHT)) { buttons ^= 0x01; }
     // printf("MOUSE: Movement: %d/%d buttons 0x%.2x\n",xm,ym,buttons);
     // Do we need to update buttons?
-    if(buttons != mouse_last_buttons){
+    if (buttons != mouse_last_buttons) {
       // Yes - Generate a mouse packet (no movement, just buttons)
-      if(mouse_phase == 1){
+      if (mouse_phase == 1) {
 	put_mouse_rx_ring(active_console,0);
 	put_mouse_rx_ring(active_console,0);
 	mouse_phase ^= 1;
@@ -397,27 +417,31 @@ void sdl_send_mouse_event(void){
 }
 
 // Lisp updated the mouse position
-void warp_mouse_callback(int cp){
+void warp_mouse_callback(int cp) {
   // Make sure we care first
-  if(mouse_op_mode != 1 || cp_state[cp] != 3 || cp != active_console){ return; }
+  if ((mouse_op_mode != 1) ||
+      (cp_state[cp] != 3) || (cp != active_console)) {
+    return;
+  }
   mouse_update_inhibit++;
   // printf("WARP MOUSE 0x%X,0x%X\n",pS[cp].Amemory[mouse_x_loc[cp]],pS[cp].Amemory[mouse_y_loc[cp]]);
-  SDL_WarpMouse((pS[cp].Amemory[mouse_x_loc[cp]]&0xFFFF),(pS[cp].Amemory[mouse_y_loc[cp]]&0xFFFF));
+  SDL_WarpMouse((pS[cp].Amemory[mouse_x_loc[cp]]&0xFFFF),
+		(pS[cp].Amemory[mouse_y_loc[cp]]&0xFFFF));
 }
 
-void set_bow_mode(int vn,int mode){
-  int i,j;
-
-  if(black_on_white[vn] == mode){
+void set_bow_mode(int vn, int mode) {
+  int i,
+    j;
+  if (black_on_white[vn] == mode) {
     // printf("BLACK-ON-WHITE MODE unchanged\n");
     return;                   /* noop */
   }
   printf("VC %d BLACK-ON-WHITE MODE now %d\n",vn,mode);
-  black_on_white[vn] = mode;  /* update */
-
+  // update
+  black_on_white[vn] = mode;
   // invert pixels
   uint32_t *p = FB_Image[vn];
-  if(vn == active_console){
+  if (vn == active_console) {
     uint32_t *b = screen->pixels;
     for (i = 0; i < video_width; i++) {
       for (j = 0; j < video_height; j++) {
@@ -430,21 +454,21 @@ void set_bow_mode(int vn,int mode){
   } else {
     for (i = 0; i < video_width; i++) {
       for (j = 0; j < video_height; j++) {
-	*p = (*p == pixel_off ? pixel_on : pixel_off);
+	*p = ((*p == pixel_off) ? pixel_on : pixel_off);
 	p++;
       }
     }
   }
 }
 
-void accumulate_update(int h, int v, int hs, int vs){
+void accumulate_update(int h, int v, int hs, int vs) {
   if (h < u_minh) u_minh = h;
   if (h+hs > u_maxh) u_maxh = h+hs;
   if (v < u_minv) u_minv = v;
   if (v+vs > u_maxv) u_maxv = v+vs;
 }
 
-void send_accumulated_updates(void){
+void send_accumulated_updates(void) {
   int hs, vs;
 
   hs = u_maxh - u_minh;
@@ -461,17 +485,15 @@ void send_accumulated_updates(void){
   u_maxv = 0;
 }
 
-void sdl_refresh(){
-  SDL_Event ev1, *ev = &ev1;
-
+void sdl_refresh() {
+  SDL_Event ev1;
+  SDL_Event* ev = &ev1;
   send_accumulated_updates();
-
   while (SDL_PollEvent(ev)) {
     switch (ev->type) {
     case SDL_VIDEOEXPOSE:
       SDL_UpdateRect(screen, 0, 0, screen->w, screen->h);
       break;
-
     case SDL_KEYDOWN:
       sdl_process_key(&ev->key, 1);
       break;
@@ -487,7 +509,7 @@ void sdl_refresh(){
       break;
 
     case SDL_QUIT:
-      if(quit_on_sdl_quit != 0){
+      if (quit_on_sdl_quit != 0) {
 	sdl_system_shutdown_request();
       }
       break;
@@ -498,15 +520,15 @@ void sdl_refresh(){
   }
 }
 
-void sdl_cleanup(void){
-  if(mouse_op_mode == 0){
+void sdl_cleanup(void) {
+  if (mouse_op_mode == 0) {
     SDL_WM_GrabInput(SDL_GRAB_OFF);
   }
   SDL_ShowCursor(SDL_ENABLE);
-  if(sdu_conn_fd > 0){
+  if (sdu_conn_fd > 0) {
     close(sdu_conn_fd);
   }
-  if(sdu_fd > 0){
+  if (sdu_fd > 0) {
     close(sdu_fd);
   }
   write_nvram();
@@ -576,7 +598,7 @@ int sdl_init(int width, int height) {
   // Redraw it
   SDL_UpdateRect(screen, 0, 0, video_width, video_height);
   // Grab the mouse if we are in direct mode
-  if(mouse_op_mode == 0){
+  if (mouse_op_mode == 0) {
     SDL_WM_GrabInput(SDL_GRAB_ON);
   }
   SDL_ShowCursor(SDL_DISABLE);
@@ -625,7 +647,7 @@ void framebuffer_update_word(int vn,uint32_t addr,uint32_t data) {
     }
     accumulate_update(col, row, 32, 1);
   } else {
-    while(mask < 0x100000000LL){
+    while(mask < 0x100000000LL) {
       if (((black_on_white[vn] == 0) &&
 	   (data&mask) != mask) ||
 	  ((black_on_white[vn] == 1) &&
@@ -676,9 +698,9 @@ void framebuffer_update_hword(int vn, uint32_t addr, uint16_t data) {
     accumulate_update(col, row, 16, 1);
   } else {
     while (mask < 0x10000LL) {
-      if(((black_on_white[vn] == 0) &&
-	  ((data & mask) != mask)) ||
-	 ((black_on_white[vn] == 1) && ((data & mask) == mask))) {
+      if (((black_on_white[vn] == 0) &&
+	   ((data & mask) != mask)) ||
+	  ((black_on_white[vn] == 1) && ((data & mask) == mask))) {
 	FB_Image[vn][outpos] = pixel_on;
       } else {
 	FB_Image[vn][outpos] = pixel_off;
@@ -714,7 +736,7 @@ void framebuffer_update_byte(int vn, uint32_t addr, uint8_t data) {
     return;
   }
   if (active_console == vn) {
-    while(mask < 0x100){
+    while(mask < 0x100) {
       if (((black_on_white[vn] == 0) &&
 	   ((data & mask) != mask)) ||
 	  (((black_on_white[vn] == 1) &&
