@@ -1,7 +1,7 @@
 
 #include <stdbool.h>
-#include <SDL.h>
-#include <SDL_keysym.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_keysym.h>
 #include <sys/time.h>
 #include <signal.h>
 #include <unistd.h>
@@ -159,8 +159,8 @@ uint32_t sdl_timer_callback(uint32_t interval,
   return(interval);
 }
 
-SDL_Scancode LAM_CODE_F12 = SDLK_F12;
-SDL_Scancode LAM_CODE_F11 = SDLK_F11;
+SDLKey LAM_CODE_F12 = SDLK_F12;
+SDLKey LAM_CODE_F11 = SDLK_F11;
 
 void kbd_handle_char(int code, int down) {
   int sdlchar = code;
