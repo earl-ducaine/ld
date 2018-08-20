@@ -1620,5 +1620,4 @@ void lam_main_pulse() {
       usleep(1);
     }
   }
-  // Otherwise loop
 }

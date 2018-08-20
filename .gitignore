@@ -1,6 +1,7 @@
 # Things for git to ignore
 # Object files
 *.o
+*.so
 ld
 lam
 lpart

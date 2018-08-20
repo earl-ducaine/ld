@@ -109,13 +109,18 @@
 
       Then load it
 
-
+      (si:set-sys-host "lm" nil nil "release-4.customer-site;")
       (load "LAMA:L.MY-SITE;SYS.TRANSLATIONS")
 
 
    1. Now you can build and load the site
 
       (make-system 'site :recompile :noconfirm()
+      (update-site-configuration-info)
+
+   3. activate network
+
+      (network:enable)
 
    2. And save the word
 

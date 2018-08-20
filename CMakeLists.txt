@@ -1,18 +1,5 @@
 
 
-
-# molloyd@beaglebone:~/exploringBB/extras/cmake$ tree studentlib_shared/
-#  studentlib_shared/
-#  |-- CMakeLists.txt
-#  |-- build
-#  |-- include
-#  |   \-- Student.h
-#  \-- src
-#  .   \-- Student.cp
-#  3 directories, 3 files
-
-
-
 add_definitions(-DSTDC_HEADERS)
 add_definitions(-DHAVE_REGEX_H)
 add_definitions(-DHAVE_SYS_WAIT_H)

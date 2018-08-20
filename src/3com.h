@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 
+/* Copyright 2016-2017
    Daniel Seagraves <dseagrav@lunar-tokyo.net>
    Barry Silverman <barry@disus.com>
 
@@ -20,7 +20,16 @@
 
 /* 3Com 3C400 Multibus Ethernet */
 
+#ifndef THREE_COM_H
+#define THREE_COM_H
+
+extern int ether_fd;
+extern uint8_t ether_rx_buf[];
+
 void enet_clock_pulse();
 void enet_reset();
 uint8_t enet_read(uint16_t addr);
 void enet_write(uint16_t addr,uint8_t data);
+int enet_init();
+
+#endif // THREE_COM_H

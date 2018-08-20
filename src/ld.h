@@ -22,11 +22,14 @@
 
 // Kernel items
 void lambda_dump(int opts);
-#ifdef BURR_BROWN
+
+// #define BURR_BROWN 1
+
+
 void debug_tx_rq(uint8_t rq,uint32_t addr,uint32_t data);
 void debug_connect();
 void debug_clockpulse();
-#endif
+
 void nubus_cycle(int sdu);
 void sducons_write(char data);
 

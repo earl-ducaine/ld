@@ -4,6 +4,13 @@ find_package(SDL 1.2 EXACT REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
+
+
+
+# Need to test for the following:
+# HAVE_LINUX_IF_H) && defined (HAVE_LINUX_IF_TUN_H)
+
+
 if(CONFIG_2X2)
     add_definitions(-DCONFIG_2X2)
 endif(CONFIG_2X2)
@@ -15,6 +22,7 @@ add_definitions(-DSDL1)
 file(GLOB LIB_SOURCES
   "3com.c"
   "3com.h"
+  "3com-tun.c"
   "kernel.c"
   "lambda_cpu.c"
   "lambda_cpu.h"
