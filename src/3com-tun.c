@@ -1,26 +1,16 @@
 
 
 #include <stdio.h>
-//  #include <stdbool.h>
-// #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-// #include <strings.h>
 #include <unistd.h>
-// #include <fcntl.h>
 #include <net/if.h>
 #include <errno.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
-
 #include <fcntl.h>
-
-
 #include <sys/ioctl.h>
-// #include <sys/socket.h>
 #include <linux/if_tun.h>
-
 
 #include "3com.h"
 
@@ -59,29 +49,31 @@ int enet_init() {
   return fd;
 }
 
-void ether_tx_pkt(uint8_t *data,uint32_t len){
+void ether_tx_pkt(uint8_t* data, uint32_t len) {
   ssize_t res = 0;
-  if(ether_fd < 0){
+  if (ether_fd < 0) {
     perror("ether: ether_fd not valid");
     return;
   }
   printf("Ether: Sending %d bytes\n",len+4);
   res = write(ether_fd,data-4,len+4);
-  if(res < 0){
+  if (res < 0) {
     perror("ether:write()");
   }
 }
 
-uint32_t enet_rx_pkt(){
+uint32_t enet_rx_pkt() {
   ssize_t res = 0;
-  if(ether_fd < 0){ return(0); }
+  if (ether_fd < 0) {
+    return 0;
+  }
   res = read(ether_fd, ether_rx_buf, (0x800-2));
-  if(res < 0){
-    if(errno != EAGAIN && errno != EWOULDBLOCK){
+  if (res < 0) {
+    if (errno != EAGAIN && errno != EWOULDBLOCK) {
       perror("ether:read()");
     }
-    return(0);
+    return 0;
   }
   // printf("Done! Got %d bytes\n",(int)res);
-  return(res);
+  return res;
 }

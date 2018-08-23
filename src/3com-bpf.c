@@ -1,5 +1,6 @@
 
-
+#include <net/if.h>
+#include <net/bpf.h>
 
 char ether_bpfn[64];
 
