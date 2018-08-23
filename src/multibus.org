@@ -1,0 +1,69 @@
+
+
+* Multibus hardware simulator
+
+  The purpose of this document is to outline a technique for hardware
+  simulation that will fullfil the twin goals of allowing a high
+  degree of optimization and proves real understanding to the
+  underlying hardware design.
+
+** Parameters of what we'd like to model
+   
+   - From a theoretical perspective, we'd like to demonstrate that our
+     approach is powerful enough to model substantially all computer
+     hardware. 
+
+   - Since a fundamental automata theory says that we can model all
+     computer processes as a discreet set of states where one state
+     leads to another through a set of transitions determined by the
+     state, can posit that our arbitrary hardware is a state machine
+     which recieves a stream of transitions.
+
+   - I/O raises a complication, since it adds an aspect of
+     non-detirmanism, but strictly speaking only input is problematic
+     in that input really is modeled as part of the begin state, the
+     transition stream then directs that state to the appropriate
+     resultant state.
+
+   - Our question with this scheme is whether transition stream breaks
+     any of the laws of our automata by being computed based on the
+     current state.  The answer is no, because we can pretent
+     ominscince, that is we can say that we have fortold every single
+     state and the result that it must transition to and therefor each
+     transition in the stream was personally selected knowing the from
+     and the to states.
+
+   - Is it possible to prove the generality of our model in ACL2?
+
+** Model refinement
+
+   Arranging new begining and ending states for each input event we'd
+   like to model is a pain.  Why couldn't elements in the transition
+   stream be treated as input events?  We can still claim that they're
+   'pre-ordained'. If we call it a transition vector, then we can
+   models all rules needed to be combined with current state to fully
+   specify the transition.
+
+   First we'll model a simplistic computer.  We send the computer a
+   stream of numbers and the computer adds them up (accumulates them
+   into a register, r). 
+
+   We'll use Sussman's technique of a continuation with a dispatch
+
+   #+BEGIN_SRC lisp :tangle start-swank-server.lisp
+          ;;; -*- mode: lisp ; syntax: ansi-common-lisp -*-
+          (defun cpu ()
+            (let ((register 0))
+              (lambda (x)
+                (cond ((numberp x)
+                       (setf register (+ register x)))
+                      ((eql x :reset)
+                       (setf register 0))
+                      ((eql x :register)
+                       register)
+                      ((and (consp x)
+                            (eql (car x) :set))
+                       (setf register (cadr x)))))))
+   #+END_SRC
+
+   
