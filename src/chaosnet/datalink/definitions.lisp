@@ -69,51 +69,50 @@
 ;;------------------------------------------------------------------------------
 ;; Controller Definitions:
 
-(Defparameter CONTROLLER-BOARD-TYPE-ALIST ()
-  "Alist of network controller board types dotted with controller flavor names.")
+(defparameter *controller-board-type-alist* '()
+  "alist of network controller board types dotted with controller flavor 
+   names.")
 
-(Defvar CONTROLLER-LIST ()  "List of All Network Datalink Controller objects") 
+(defvar *controller-list* '()
+  "List of all network datalink controller objects") 
 
-(Defun DEFINE-CONTROLLER-BOARD (Board-Type Controller-Flavor &Aux Item)
-  "Adds (BOARD-TYPE . CONTROLLER-FLAVOR) to the Controller-Board-Type-Alist.
-   BOARD-TYPE is a string such as 'NEC' or 'NPE' while CONTROLLER-FLAVOR is
-   a symbol like 'Ethernet:NuBus-Enc or 'Ethernet:Nupie-Enc.  This is used only for
-   Explorer boards"
-                                           ; 23 JUL 87  MMG
-   (If (Null
-	 (Setf Item (Assoc Board-Type Controller-Board-Type-Alist :Test #'EQUALP)))
-       (Push (Cons Board-Type Controller-Flavor) Controller-Board-Type-Alist)
-       (Rplacd Item Controller-Flavor)))
+(defun define-controller-board (board-type controller-flavor)
+  "adds (board-type . controller-flavor) to the controller-board-type-alist.
+     board-type is a string such as 'nec' or 'npe' while
+     controller-flavor is a symbol like 'ethernet:nubus-enc or
+     'ethernet:nupie-enc.  this is used only for explorer boards"
+  (let (item)
+    (if (null
+	 (setf item (assoc board-type controller-board-type-alist :test #'equalp)))
+	(push (cons board-type controller-flavor) controller-board-type-alist)
+	(rplacd item controller-flavor))))
 
-
-;;------------------------------------------------------------------------------
 ;; Metering aids:
 
-(Defvar PEEK-A-BOO-LIST      ()  "List of Meters to be displayed by PEEK") 
-(Defvar CONTROLLER-METERS    ()  "List of Controller Meters to be displayed by PEEK")
+(defvar *peek-a-boo-list* '()
+  "list of meters to be displayed by peek")
+
+(defvar *controller-meters* '()
+  "List of controller meters to be displayed by peek")
 
 ;; This belongs in Network-Support:
-(Defmacro DEFVAR-FOR-PEEK-A-BOO (Symbol Value &Optional (Doc "Some Network Variable"))
-  `(Progn 'Compile
-          (Defvar ,Symbol ,Value ,Doc)
-          (Pushnew '((Symbol-Value',Symbol),Doc) Net:Peek-A-Boo-List :Test #'Equal)))
+(defmacro defvar-for-peek-a-boo (symbol value &optional (doc "some network variable"))
+  `(progn 'compile
+          (defvar ,symbol ,value ,doc)
+          (pushnew '((symbol-value',symbol),doc) net:peek-a-boo-list :test #'equal)))
 
+(defun reset-meters ()
+  "resets all network and controller meters"
+  (dolist (meter peek-a-boo-list)
+    (unless (consp meter) (set meter 0)))
+  (dolist (cont controller-list)
+     (send cont :send-if-handles :reset-meters)))
 
-(Defun RESET-METERS ()
-  "Resets all network and controller meters"
-  (Dolist (Meter Peek-A-Boo-List)
-    (Unless (Consp Meter) (Set Meter 0)))
-  (Dolist (Cont Controller-List)
-     (Send Cont :Send-If-Handles :Reset-Meters)))
-
-
-;;------------------------------------------------------------------------------
 ;; Utility macros & functions:
-
-(Defmacro SWAP-BYTES (Word)
-  "Returns WORD with the LSB in the MSB position and the MSB in the LSB position."
-  (Once-Only (Word)
-    `(Dpb (Ldb (Byte 8 0) ,Word) (Byte 8 8) (Ldb (Byte 8 8) ,Word))))
+(defmacro swap-bytes (word)
+  "returns word with the lsb in the msb position and the msb in the lsb position."
+  (once-only (word)
+    `(dpb (ldb (byte 8 0) ,word) (byte 8 8) (ldb (byte 8 8) ,word))))
 
 (Defsubst ROUND-UP-TO-QUAD (Addr)
   "Round ADDR up to a multiple of 4."

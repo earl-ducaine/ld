@@ -25,46 +25,43 @@
 ;;          NETWORK DATALINK LAYER -- This must be compiled after the Namespace and 
 ;;          Network-Support systems have been loaded:
 
+(defsystem datalink
+   (:name             "network data-link layer")
+   (:pathname-default "sys:datalink;")
+   (:patchable        "sys:patch.datalink;" patch)    ;added patch file name ktn 6/30
+   (:warnings-pathname-default
+                      "sys:cwarns;datalink.lisp")
+;  (:initial-status    :released)
 
-(Defpackage "ETHERNET" (:Use "TICL" "LISP" "SYS") (:Nicknames "Ethernet" "ethernet"))
+   (:module	       defs	       	"definitions")            ; datalink definitions
+   (:module	       enet	       	"ethernet")               ; ethernet definitions
+;  (:module            starlan          "starlan"                 ; starlan definitions
+;  (:module            token            "token-ring"              ; token ring definitions
+   (:module            nubus-enc        "nubus-enc")              ; nubus ethernet controller
+   (:module            nupie-enc        "nupie-enc")              ; nupi/e ethernet controller
+;  (:module            ccb-enc          "ccb-enc")                ; ccb ethernet controller
+   (:module	       init		"initializations")        ; controller initializations
 
-(DEFSYSTEM DATALINK
-   (:NAME             "Network Data-Link Layer")
-   (:PATHNAME-DEFAULT "SYS:DATALINK;")
-   (:PATCHABLE        "SYS:PATCH.DATALINK;" PATCH)    ;added patch file name KTN 6/30
-   (:WARNINGS-PATHNAME-DEFAULT
-                      "SYS:CWARNS;DATALINK.LISP")
-;  (:INITIAL-STATUS    :RELEASED)
+   (:compile-load      defs)
+   (:compile-load-init enet
+			      (defs)
+			      (:fasload defs)
+			      (:fasload defs))
+   (:compile-load-init nubus-enc
+		              (defs enet)
+			      (:fasload defs enet)
+			      (:fasload defs enet))
+   (:compile-load-init nupie-enc
+		              (defs enet)
+			      (:fasload defs enet)
+			      (:fasload defs enet))
 
-   (:MODULE	       Defs	       	"Definitions")            ; Datalink definitions
-   (:MODULE	       Enet	       	"Ethernet")               ; Ethernet definitions
-;  (:MODULE            Starlan          "Starlan"                 ; Starlan definitions
-;  (:MODULE            Token            "Token-Ring"              ; Token Ring definitions
-   (:MODULE            Nubus-Enc        "NuBus-Enc")              ; NuBus Ethernet Controller
-   (:MODULE            Nupie-Enc        "Nupie-Enc")              ; Nupi/E Ethernet Controller
-;  (:MODULE            Ccb-Enc          "Ccb-Enc")                ; CCB Ethernet Controller
-   (:MODULE	       Init		"Initializations")        ; Controller Initializations
-
-   (:COMPILE-LOAD      Defs)
-   (:COMPILE-LOAD-INIT Enet
-			      (Defs)
-			      (:Fasload Defs)
-			      (:Fasload Defs))
-   (:COMPILE-LOAD-INIT NuBus-Enc
-		              (Defs Enet)
-			      (:Fasload Defs Enet)
-			      (:Fasload Defs Enet))
-   (:COMPILE-LOAD-INIT Nupie-Enc
-		              (Defs Enet)
-			      (:Fasload Defs Enet)
-			      (:Fasload Defs Enet))
-
-   (:COMPILE-LOAD-INIT Init
-			      (Defs Enet Nupie-Enc NuBus-Enc)
-			      (:Fasload Defs Enet Nupie-Enc NuBus-Enc)
-			      (:Fasload Defs Enet Nupie-Enc NuBus-Enc))
+   (:compile-load-init init
+			      (defs enet nupie-enc nubus-enc)
+			      (:fasload defs enet nupie-enc nubus-enc)
+			      (:fasload defs enet nupie-enc nubus-enc))
     
-   ) ; Datalink
+   )
 
 
 ;;            Menus and Peek functionality for Datalink -- This must be compiled
