@@ -1,0 +1,28 @@
+$Id: README,v 1.2 1999/11/24 18:25:13 brad Exp $
+11/24/99, 13:19
+
+Chaosnet protocol code from MIT
+Semi-portable implementation for UNIX
+originally for BSD
+now ported to Linux
+
+brad@parker.boston.ma.us
+
+Chaosnet was an early networking protocol developed at MIT.  Near as I
+can tell it was developed before TCP/IP, perhaps during the early
+Arpanet NCP protocol days.  The protocol was supported by Symbolics
+lisp machines as a native networking protocol.  Older machines (like
+my ancient 3600) don't have TCP/IP support but do support Chaosnet on
+Ethernet.  This is a port of some really really old BSD kernel code
+to modern day linux.
+
+I doubt anyone would want this code unless they have some old lisp
+machines they are playing with...
+
+I've tested this code with General 7.2 and 8.3.  It allows QFILE
+transfers back and forth, which was my goal.  I also hacked the RTAPE
+server code to do RTAPE support using a disk file instead of a real
+file.  This is useful for archiving...
+
+-brad
+

@@ -1,0 +1,36 @@
+$Id: INSTALL.linux,v 1.3 1999/11/24 18:25:13 brad Exp $
+
+Last update: 11/24/99, 13:17
+
+Installation of the chaosnet code on linux requires a small kernel
+mod. Sorry, I needed a few symbols which were not exported.
+
+The code is implemented via a loadable module and a number of userland
+programs.
+
+Steps:
+
+modify /usr/src/linux/kernel/ksyms.c
+rebuild kernel
+
+mknod /dev/chaos c 80 1
+mknod /dev/churfc c 80 2
+
+make
+
+/sbin/insmod chaosnet.o
+
+create /etc/hosttab  (see sample below)
+
+cat - >/etc/hosttab <<EOF
+# simple chaosnet hosttab, one server
+NET CHAOS,1
+HOST local,CHAOS 1,SERVER
+HOST LISPM1,CHAOS 402,SERVER
+HOST LISPM2,CHAOS 405,SERVER
+EOF
+
+cmd/chinit 257 local  (note: decimal)  <-- I think this could be 1
+cmd/cheaddr eth0 401  (note: octal)
+cmd/chserver &
+

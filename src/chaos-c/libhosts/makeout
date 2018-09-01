@@ -1,0 +1,18 @@
+cc -g -DBSD42 -c hostlib.c
+cc -g -DBSD42 -c readhosts.c
+cc -g -DBSD42 -c chopen.c
+ar uv libhosts.a hostlib.o readhosts.o chopen.o
+ar: creating libhosts.a
+a - hostlib.o
+a - readhosts.o
+a - chopen.o
+ranlib libhosts.a
+cc -g -DBSD42 -o hosts2 hosts2.c
+cc -g -DBSD42 -c chaosnames.c
+cc -o chaosnames chaosnames.o libhosts.a
+cp libhosts.a /usr/lib/libhosts.a
+ranlib /usr/lib/libhosts.a
+chmod 644 /usr/lib/libhosts.a
+install -c -m 644 hosttab.h /usr/include/
+install	-c -m 705 chaosnames /usr/lib/chaos
+install	-c -m 705 hosts2 /usr/lib/chaos

@@ -1,0 +1,110 @@
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chread.c
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chopen.c
+cc -o chread chread.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chsend.c
+cc -o chsend chsend.o chopen.o /usr/lib/libhosts.a
+cc -c -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -I/sys/ALLSPICE -O chstat.c
+cc -o chstat chstat.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chup.c
+cc -o chup chup.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c hostat.c
+cc -o hostat hostat.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chtelnet.c
+cc -o chtelnet chtelnet.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c cftp.c
+cc -o cftp cftp.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chsupdup.c
+cc -o chsupdup chsupdup.o chopen.o /usr/lib/libhosts.a -ltermlib
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chfinger.c
+chfinger.c: 27: CHAOS redefined
+cc -o chfinger chfinger.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chtime.c
+cc -o chtime chtime.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chtape.c
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c record.c
+cc -o chtape chtape.o record.o chopen.o /usr/lib/libhosts.a
+cc -c -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -I/sys/ALLSPICE -O prtable.c
+cc -o prtable prtable.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c conn.c
+"conn.c", line 150: warning: illegal combination of pointer and integer, op =
+cc -o conn conn.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chaccept.c
+cc -o chaccept chaccept.o chopen.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chwrite.c
+cc -o chwrite chwrite.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c send.c
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c sendsys.c
+cc -o send send.o sendsys.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c reply.c
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c sendtxt.c
+cc -o reply reply.o sendsys.o sendtxt.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c what.c
+cc -o what what.o sendtxt.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c webster.c
+cc -o webster webster.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c newsends.c
+cc -o newsends newsends.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c NAME.c
+cc -o NAME NAME.o chopen.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c SEND.c
+cc -o SEND SEND.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c FILE.c
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c glob.c
+cc -o FILE FILE.o glob.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c TELNET.c
+cc -o TELNET TELNET.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c RTAPE.c
+/usr/include/vaxuba/tsreg.h: 48: b_repcnt redefined
+/usr/include/vaxuba/utreg.h: 178: b_repcnt redefined
+cc -o RTAPE RTAPE.o record.o chopen.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c SUPDUP.c
+"SUPDUP.c", line 392: warning: illegal pointer combination
+cc -o SUPDUP SUPDUP.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c SPICE.c
+cc -o SPICE SPICE.o chopen.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c TTYLINK.c
+cc -o TTYLINK TTYLINK.o chopen.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c RAMTEK.c
+cc -o RAMTEK RAMTEK.o chopen.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c LGP.c
+cc -o LGP LGP.o chopen.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c MAIL.c
+cc -o MAIL MAIL.o chopen.o /usr/lib/libhosts.a  TCP/netsubrs.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c SMTP.c
+cc -o SMTP SMTP.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c NETLOAD.c
+cc -o NETLOAD NETLOAD.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c UU.c
+cc -o UU UU.o chopen.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chserver.c
+cc -o chserver chserver.o chopen.o /usr/lib/libhosts.a 
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chinit.c
+cc -o chinit chinit.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c cheaddr.c
+cc -o cheaddr cheaddr.o
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chconnect.c
+"chconnect.c", line 72: warning: illegal combination of pointer and integer, op =
+cc -o chconnect chconnect.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chaosmail.c
+cc -o chaosmail chaosmail.o chopen.o /usr/lib/libhosts.a
+cc -O -I/usr/include/chaos -DDESTSERVERS=\"/usr/lib/chaos\"  -DFILEUTMP=\"/etc/chfile.utmp\" -DDESTUSERS=\"/usr/site\"  -DCHRMAJOR=40   -DBSD42 -DSYSLOG  -DCHAOS  -c chmkdev.c
+cc -o chmkdev chmkdev.o chopen.o /usr/lib/libhosts.a
+for i in NAME SEND FILE TELNET RTAPE SUPDUP SPICE TTYLINK RAMTEK  LGP MAIL SMTP NETLOAD UU; do install -c -s -m 770 $i /usr/lib/chaos/$i; done
+for i in  chread chsend chstat chup hostat chtelnet cftp chsupdup chfinger chtime  chtape prtable conn chaccept chwrite  send reply what webster newsends; do install -c -s -m 755 $i /usr/site/$i; done
+cd /etc; rm -f chserver chinit cheaddr  chconnect
+for i in chserver chinit cheaddr  chconnect; do install -c -s -o root -m 4755 $i /etc/$i; done
+cd /usr/lib/chaos; chmod 770 NAME SEND FILE TELNET RTAPE SUPDUP SPICE TTYLINK RAMTEK  LGP MAIL SMTP NETLOAD UU; chmod 750 SEND RAMTEK LGP; chmod 730 NAME NETLOAD; strip NAME SEND FILE TELNET RTAPE SUPDUP SPICE TTYLINK RAMTEK  LGP MAIL SMTP NETLOAD UU
+strip: NAME already stripped
+strip: SEND already stripped
+strip: FILE already stripped
+strip: TELNET already stripped
+strip: RTAPE already stripped
+strip: SUPDUP already stripped
+strip: SPICE already stripped
+strip: TTYLINK already stripped
+strip: RAMTEK already stripped
+strip: LGP already stripped
+strip: MAIL already stripped
+strip: SMTP already stripped
+strip: NETLOAD already stripped
+strip: UU already stripped

@@ -1,0 +1,3 @@
+chread.c:#include <sgtty.h>
+chwrite.c:#include <sgtty.h>
+

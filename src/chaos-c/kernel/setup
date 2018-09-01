@@ -1,0 +1,5 @@
+#mknod /dev/chaos c 80 1
+#mknod /dev/churfc c 80 2
+/sbin/insmod chaosnet.o
+../cmd/chinit 257 local
+../cmd/cheaddr eth0 401

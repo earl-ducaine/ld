@@ -1,0 +1,347 @@
+INSTALLATION GUIDE FOR SYMBOLICS CHAOSNET SOFTWARE FOR UNIX
+-----------------------------------------------------------
+
+The distribution tape has been made by writing a "tar" tape of the
+relevent parts of the "/usr" file system relative to the root directory.
+
+This INSTALLATION file is duplicated at the top level and does not really
+belong in /usr.
+
+The contents of the tape are:
+
+usr/include/hosttab.h
+	This is the header file for the host table library.
+
+usr/include/chaos/*.h
+	These are the header files needed by the kernel and user programs
+	that deal with the Chaos network.
+
+usr/include/tsreg.h
+	This file contains fixes to a broken include file (fixed in later
+	Berkeley distributions).  It contains changes which allow the
+	RTAPE server to compile without errors. It goes in /usr/include/sys.
+
+usr/src/lib/libhosts/*
+	These files create a library of host table manipulation routines
+	and actually build and install new host tables.  The source file
+	from which the actual host table is built also resides here.
+	See the README file in this directory.
+
+usr/src/cmd/chaos/*
+	This directory contains all sources for user programs, and the
+	make file to compile and install them all.  It also contains
+	this file.
+
+usr/src/sys/chncp/*
+	This directory contains sources for the part of the kernel code
+	that is independent of the operating system it is run on (largely).
+
+usr/src/sys/chunix/*
+	This directory contains the UNIX interface to the network, which
+	implements the network software as a UNIX device driver.
+
+usr/src/sys/conf/files.chaos
+	This file contains extra lines to be added to the "files" file
+	for the VAX configuration system.
+
+usr/src/sys/conf/conf.chaos
+	This file contains the lines necessary to add to the configuration
+	file for chaosnet installation.
+
+usr/src/sys/sys/nami.c.chaos
+	This file contains a new version of the nami.c file which has
+	a small enhancement required for the chaosnet code.
+	Not included in distributions for non source licensees.
+	See the file usr/src/sys/sys/nami.changes.
+
+usr/src/sys/sys/fio.c.chaos
+	This file contains a new version of fio.c which has some bug
+	fixes for the closef routine.
+	Not included in distributions for non source licensees.
+	See the file usr/src/sys/sys/fio.changes.
+
+usr/src/sys/dev/conf.c.chaos
+	This file is an example of the one needed to include the entries
+	in the character device switch for the chaosnet.
+
+usr/src/sys/dev/autoconf.c.cha
+	This file has a bug fixed to allow the autoconfiguration system
+	to work with chaosnet interfaces.
+	Not included in distributions for non source licensees.
+	See the file usr/src/sys/dev/autoconf.changes.
+
+usr/src/sys/sys/locore.s.chaos
+	This file also fixes the bug in autoconfigure for chaosnet interfaces.
+	Not included in distributions for non source licensees.
+	See the file usr/src/sys/sys/locore.changes.
+
+usr/src/sys/dev/mx2.c.chaos
+	This file is changed to be consistent with the change to fio.c
+	Not included in distributions for non source licensees.
+	See the file usr/src/sys/dev/mx2.changes.
+
+usr/src/sys/dev/pty.c.chaos
+	This file is an updated and improved version of pty.c that works
+	better than the standard 4.1 bsd one.
+
+usr/src/sys/dev/uba.c.chaos
+	This file fixes a bad bug in the Berkeley 4.1BSD uba driver.
+
+usr/src/sys/h/ilreg.h and usr/src/sys/h/if_il.h
+	Header files for the EN-11 ethernet interface (Interlan).
+
+usr/src/cmd/delivermail/conf.c.chaos
+	This is a delivermail configuration file which works for chaosnet
+	mail.  Its a mess, but the whole UNIX mail software is.
+	Basically this configuration tells delivermail that it is running
+	on an arpanet host with the chaosnet mailer as the mail sending
+	program.  This configuration will not work for hosts directly
+	connected to the arpanet.
+
+usr/src/cmd/ucbmail/optim.c.chaos
+	This is a piece of code which put "@ Berkeley" all over the place.
+	It has been trivially modified to keep its hands OFF.
+
+INSTALLATION PROCEDURE
+----------------------
+
+EXTRACT FILES FROM TAPE
+
+1. Tar the tape to some working place - not the root directory:
+	tar x
+
+HEADER FILES
+
+1. Make the usr/include/chaos directory:
+	mkdir /usr/include/chaos
+	chmod 755 /usr/include/chaos
+2. Copy all the files in usr/include/chaos to /usr/include/chaos:
+	cp usr/include/chaos/* /usr/include/chaos
+	chmod 644 /usr/include/chaos/*
+
+HOST TABLE and HOST TABLE LIBRARY
+
+1. Make a directory for the host table library.
+   The preferred place is /usr/src/local/lib/libhosts.
+   Alternates are /usr/src/lib/libhosts or /usr/local/src/lib/libhosts:
+	mkdir /usr/src/local/lib/libhosts
+	chmod 755 /usr/src/local/lib/libhosts
+2. Copy all the files in usr/src/lib/libhosts to the directory above.
+	cp usr/src/lib/libhosts/* /usr/src/local/lib/libhosts
+	chmod 644 /usr/src/local/lib/libhosts/*
+3. Go to that directory.
+	cd /usr/src/local/lib/libhosts
+4. Look at the README file and prepare the host table files for your site.
+5. Type "make install" - as super-user.
+	This will also copy the file hosttab.h to /usr/include
+
+BUILDING A NEW VAX KERNEL WITH CHAOSNET
+
+1. Make two new directories in the directory where your kernel sources
+   are kept, at the same level as the conf, sys, and dev directories,
+   called "chncp" and "chunix".  Assume that this is in /usr/src/local/sys.
+	mkdir /usr/src/local/sys/chncp /usr/src/local/sys/chunix
+	chmod 755 /usr/src/local/sys/chncp /usr/src/local/sys/chunix
+2. Copy files from usr/src/sys/chncp/* to the chncp directory
+	cp usr/src/sys/chncp/* /usr/src/local/sys/chncp
+	chmod 644 /usr/src/local/sys/chncp/*
+	[See Addendum I - Note on Ethernet interface driver]
+3. Copy files from usr/src/sys/chunix/* to the chunix directory
+	cp usr/src/sys/chunix/* /usr/src/local/sys/chunix
+	chmod 644 /usr/src/local/sys/chunix/*
+4. Append the usr/src/sys/conf/files.chaos file on the end of the
+   "files" file in the conf directory.
+	cat usr/src/sys/conf/files.chaos >> /usr/src/local/sys/conf/files
+5. Append the usr/src/sys/conf/conf.chaos file on the end of the
+   configuration file for your system (named YOURSYSTEM).
+   If you already have it, you don't have to add the following line.
+	pseudo-device	pty
+	cat usr/src/sys/conf/conf.chaos >> /usr/sc/local/sys/conf/YOURSYSTEM
+6. Install the nami.c, fio.c, locore.s into the sys directory, replacing the
+   originals. (Move the originals aside with the suffix ".4.1").  The new
+   versions are in usr/src/sys and have the .chaos extension to their names.
+   If you don't have a source license these new files will not be included.
+   The description of the small changes in these files is found in the
+   file with the same name with the suffix ".changes" in the changes/sys dir-
+   ectory. If your kernel has been modified, use the comments in the ".changes"
+   files as a guide to inserting just the necessary changes.
+7. Install the mx2.c, autoconf.c, pty.c, and uba.c in the dev directory
+   similarly.  See the files in changes/dev for help if your kernel has
+   been modified.
+8. Take the lines from usr/src/sys/dev/conf.c.chaos that define the
+   chaos major device (see #ifdef CHAOS), and install them in your dev/conf.c.
+   If you have no special device drivers you may use this file as is.
+   If you change the major device numbers for the chaosnet devicec,
+   change usr/src/cmd/chaos/chmkdev.c also. [See Addendum II - Major Device
+   Number assignment]
+9. Copy the files usr/src/sys/h/ilreg.h and usr/src/sys/h/if_il.h to the h
+   directory.  These are for the ethernet driver.
+9. Re-run /etc/config on your configuration file.
+10. Re-run "make depend" in the directory for your configuration.
+11.Re-run "make" in the directory for your configuration, and you have
+   a kernel to boot.
+11.Copy the kernel into the root directory.
+
+USER PROGRAMS
+
+1. Make a directory for the user program sources.
+   The preferred place is /usr/src/local/cmd/chaos.
+   Alternates are /usr/src/cmd/chaos or /usr/local/src/cmd/chaos.
+	mkdir /usr/src/local/cmd/chaos
+	chmod 755 /usr/src/local/cmd/chaos
+2. Copy all the files in usr/src/cmd/chaos into the directory just made.
+	cp usr/src/cmd/chaos/* /usr/src/local/cmd/chaos
+	chmod 644 /usr/src/local/cmd/chaos/*
+3. Go to that directory.
+	cd /usr/src/local/cmd/chaos
+4. Examine the makefile to be sure that the directories into which the
+   binaries are placed are acceptable - change the DESTxxx variables if
+   needed. Make sure the definition of where the kernel sources are is correct.
+   Make sure the major devices in chmkdev.c correspond correctly to conf.c
+   in the kernel.
+5. Call "make" to compile all the programs.  If the RTAPE server fails to
+   compile, install the fixed tsreg.h (cp usr/include/tsreg.h /usr/include/sys)
+   and try again.
+6. Make the directories /usr/local and /usr/local/lib/chaos if they don't
+   exist.  The first is where user command programs go, the second is where
+   network servers go.
+7. Call "make install" to install all the programs - as super user.
+8. Call "make special" to make the special files in /dev - as super user
+   If you have special device drivers you may have to edit chmkdev.c
+   to have the correct major device numbers.  This will change permissions
+   on all files that match /dev/ch* to 666 so be careful if you have devices
+   that begin with /dev/ch.
+9. Edit lines into the /etc/rc file where the other daemons are started.
+   /etc/chinit starts the network running and exits.
+   /etc/chserver is the network server daemon and runs in background.
+   The lines are:
+	/etc/chinit && /etc/chserver > /usr/local/lib/chaos/log 2>&1 &
+				echo -n ' chserver'		>/dev/console
+
+   If you have an ethernet interface (Symbolics EN-11, Interlan NI1010), use:
+
+	/etc/chinit && /etc/cheaddr <device-number> <chaos-address> && \
+		/etc/chserver > /usr/local/lib/chaos/log 2>&1 &
+				echo -n ' chserver'		>/dev/console
+   Actually, you need to execute /etc/cheaddr for each ethernet interface
+   configured. <chaos-address> should be the logical chaosnet address of the
+   interface and <device-number> should be 0 for the first interface, 1 for
+   the second etc.  Note that /etc/chinit, /etc/cheaddr, and /etc/chserver
+   are mutually exclusive - they all use the same device which can only be
+   open by one process.  <chaos-address> should be in octal, and the high
+   order 8 bits must be the same as all other chaosnet hosts on the same
+   Ethernet cable, since this is the chaos subnet number.
+
+10.For remote login, make /dev/ttyp{0,1,2...,7} and /dev/ptyp{0,1,2,...,7}.
+	/etc/mknod /dev/ttyp0 c 20 0
+	/etc/mknod /dev/ptyp0 c 21 0
+	/etc/mknod /dev/ttyp1 c 20 1
+	/etc/mknod /dev/ptyp1 c 21 1
+		etc.
+   Also put ttyp0-7 in /etc/ttys. (Lines like "12ttyp0").
+
+11.To make SUPDUP remote login work correctly, you should also install the
+   version of login.c found in usr/src/cmd/chaos.  If your login is special
+   just edit in the changes relating to the extra slot in the environment
+   list and the checking for ttyp? and /tmp/sd-? etc.
+   Not include in distributions for non source licensees.
+   See the file usr/src/cmd/chaos/login.changes.
+
+This should complete the installation - reboot your system.
+
+MAIL PROGRAMS
+
+1. The chaosnet MAIL server was installed by the above procedure.
+   in /usr/local/lib/chaos/MAIL
+
+2. The chaosnet mail spooler (chmail.c) was installed in
+   /usr/lib/mailers/chmail, setuid network.
+
+3. The chaosnet mail sending daemon (chmailer.c) was installed in
+   /etc/chmailer, setuid network.
+
+4. Make sure the directory /usr/spool/netmail is owned and rw by network.
+   Likewise for /usr/spool/netmail/failed.  This directory contains messages
+   that were dropped by the mail daemon for unusual reasons (like no
+   sender can be parsed to return a failed message to).
+
+5. Remake delivermail using the usr/src/cmd/delivermail/conf.c.chaos file
+   as a guide for your configuration file.
+
+6. Remake ucbmail using the usr/src/cmd/ucbmail/optim.c.chaos instead of
+   the original.
+
+6. Put a line in /usr/lib/crontab:
+	0,5,10,15,20,25,30,35,40,45,50,55 * * * * /etc/chmailer
+   to run the chaosnet mail daemon every five minutes.
+
+7. Put a line in /etc/rc "rm -f /usr/spool/netmail/temp.*" to remove
+   temporary files and locks from the chaosnet mail spooling directory
+   at boot time.
+
+When mail comes in via the chaosnet, the chaosnet MAIL server,
+/usr/local/lib/chaos/MAIL, receives it and passes it to /etc/delivermail.
+If it is for a local recipient, /etc/delivermail calls /bin/mail or
+if #define NETV6MAIL is defined in the conf.c file for delivermail,
+/usr/net/bin/v6mail for local delivery - both of these programs must
+be setuid root so they can change the owner of the /usr/spool/mail
+files for different users.  If the mail is destined for another
+host on the chaosnet, /etc/delivermail gives the message to
+/usr/lib/mailers/chmail (chmail.c) which spools it in the directory
+/usr/spool/netmail.  Then periodically, /etc/chmailer looks into this
+directory and sends the spooled messages out over the chaosnet.
+
+When /usr/lib/mailers/chmail spools a message it writes a file
+/usr/spool/netmail/temp.pid, then when the file is complete it renames
+it to /usr/spool/netmail/mail.pid.  When the daemon sends the message
+it removes the mail.pid file.  If the daemon (/etc/chmailer) fails
+on the first attempt, it writes a file "attempt.pid" with the same
+pid as the "mail.pid" file.  This file contains a number which is the
+number of attempts on sending this message.  If it fails too many times
+the message is returned to sender with an indication of failure.
+
+A table in the source of /etc/chmailer determines the delays between
+different attempts at sending a message.
+
+Please send any comments on this procedure to Jim Kulp at Symbolics
+(jek@scrc at MIT).
+
+Addendum I - Note on Ethernet interface driver.
+
+This driver, in the file /usr/src/sys/chncp/chil.c, permanently allocates
+a buffered data path of the UNIBUS adapter for DMA transmission,
+and uses the (single) direct data path for reception.
+
+On VAX 11/750's, it is possible to use another buffered data path for
+reception as well (it is not possible on 11/780's).  On the other
+hand, an 11/750 only has 3 buffered datapath's, so systems with
+several other DMA devices on the same Unibus Adapter, may not want
+to enable any buffered data paths to be used.
+
+The driver only offers the option of using a buffered data path
+permanently or not at all.  Dynamic use is not supported.
+The last argument to the uballoc routine, called once for
+reception and once for transmission in the chilsetup routine,
+determines whether buffered data paths will be used.
+
+This last argument is:
+
+UBA_CANTWAIT|UBA_NEEDBDP
+
+for using a buffered data path and
+
+UBA_CANTWAIT
+
+for using a direct data path.
+
+Addendum II - Major Device Number assignment
+
+In an attempt to achieve generality in the handling of the special files
+used by the Chaosnet software, there is a check (in nami.c) whether the
+device is one of these special devices.  This check is done via a bit-test.
+This restricts the major device number to a 32-number range, since 32 is the
+number of bits in a VAX 'long'.  Take this into account when putting
+lines into .../sys/dev/conf.c  As supplied, the chaosnet device must be
+between the first site-reserved device (25) and that number plus 31 (56).
+(see nami.c and conf.c).
+
