@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <error.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -82,7 +83,7 @@ uint8_t ETH_RX_Buffer[2][0x800];
 uint32_t eth_cycle_count;
 int enet_trace = 1;
 extern int ld_die_rq;
-int ether_fd = -1;
+intmax_t ether_fd = -1;
 
 unsigned char ether_addr[6] = {0x00, 0x02, 0x9C, 0x55, 0x89, 0xC6};
 int pkt_count = 0;
@@ -221,7 +222,12 @@ void enet_write(uint16_t addr, uint8_t data) {
 	ETH_TX_Buffer[pktoff + 11] = ETH_Addr_RAM[5];
 	// FCS will be appended by the host (one way or the other)
 	// All ready! Send it
-	ether_tx_pkt(ETH_TX_Buffer + pktoff, pktlen);
+	if (ether_fd < 0) {
+	  error(0, 0, "ether: ether_fd(%li)not valid\n", ether_fd);
+        } else {
+	  printf("Ether: Sending %d bytes\n", pktlen + 4);
+	  ether_tx_pkt(ether_fd, ETH_TX_Buffer + pktoff, pktlen);
+	}
 	ETH_MECSR_MEBACK.TBSW = 0;
 	if(ETH_MECSR_MEBACK.TINTEN != 0) {
 	  multibus_interrupt(0);
@@ -292,8 +298,11 @@ void enet_clock_pulse() {
     // Ethernet ready to take a packet?
     if((ETH_MECSR_MEBACK.AMSW == 1) &&
        ((ETH_MECSR_MEBACK.ABSW == 1) || (ETH_MECSR_MEBACK.BBSW == 1))) {
-      // Yes
-      pktlen = enet_rx_pkt();
+      if (ether_fd < 0) {
+	error(0, 0, "ether: ether_fd(%li)not valid\n", ether_fd);
+      } else {
+        pktlen = enet_rx_pkt(ether_fd, ether_rx_buf, (0x800 - 2));
+      }
       if(pktlen > 0) {
         // We can has packet!
         pktlen -= 4;

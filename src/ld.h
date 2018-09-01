@@ -42,10 +42,6 @@ void set_bow_mode(int vn,int mode);
 // beep on/off (called when vcmem keyboard control register 5 toggles "send break" bit.
 void audio_control(int onoff);
 
-// Host ethernet interface
-void ether_tx_pkt(uint8_t *data,uint32_t len);
-uint32_t enet_rx_pkt();
-
 // Mouse interface callback
 void warp_mouse_callback(int cp);
 

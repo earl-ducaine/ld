@@ -23,13 +23,16 @@
 #ifndef THREE_COM_H
 #define THREE_COM_H
 
-extern int ether_fd;
 extern uint8_t ether_rx_buf[];
 
 void enet_clock_pulse();
 void enet_reset();
 uint8_t enet_read(uint16_t addr);
 void enet_write(uint16_t addr,uint8_t data);
-int enet_init();
+char* set_ether_iface(char* tok);
+
+intmax_t enet_init();
+intmax_t ether_tx_pkt(intmax_t ether_fd, uint8_t* data, uint32_t len);
+intmax_t enet_rx_pkt(intmax_t ether_fd, uint8_t* data, uint32_t len);
 
 #endif // THREE_COM_H

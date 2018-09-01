@@ -5,8 +5,6 @@ find_package(SDL 1.2 EXACT REQUIRED)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 
-
-
 # Need to test for the following:
 # HAVE_LINUX_IF_H) && defined (HAVE_LINUX_IF_TUN_H)
 
@@ -50,31 +48,7 @@ file(GLOB LIB_SOURCES
   "keyboard-sdl-1.c")
 
 
-
-
-  # "kernel.c"
-  # "keyboard-sdl-1.c"
-  # "keyboard-sdl.c"
-  # "lambda_cpu.c"
-  # "mem.c"
-  # "sdu.c"
-  # "sdu_hw.c"
-  # "smd.c"
-  # "syms.c"
-  # "tapemaster.c"
-  # "vcmem.c"
-  # "nubus.c"
-  # "trace.c"
-  # "3com.c")
-
-
-
-
-# file(GLOB SOURCES "src/*.c")
 file(GLOB SOURCES "main.c")
-
-#file(GLOB flex_SOURCES "src/*.c")
-# file(flex_SOURCES "src/main.c")
 
 #Generate the shared library from the sources
 add_library(lam_lib SHARED ${LIB_SOURCES})

@@ -1102,7 +1102,7 @@ void audio_control(int onoff) {
 }
 
 void parse_config_line(char *line) {
-  char *tok = NULL;
+  char* tok = NULL;
   tok = strtok(line," \t\r\n");
   if (tok == NULL) { return; }
   if (tok[0] == '#' || tok[0] == ';') { return; } // Comment
@@ -1127,7 +1127,8 @@ void parse_config_line(char *line) {
     // 3Com Ethernet interface
     tok = strtok(NULL," \t\r\n");
     if (tok != NULL) {
-      strncpy(ether_iface,tok,30);
+      set_ether_iface(tok);
+      // strncpy(ether_iface, tok, 30);
       printf("Using 3Com Ethernet interface %s\n",ether_iface);
     }
   }

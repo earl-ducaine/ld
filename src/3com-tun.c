@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <net/if.h>
 #include <errno.h>
+#include <error.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -17,7 +18,15 @@
 // Linux tuntap interface
 char ether_iface[30] = "ldtap";
 
-int enet_init() {
+char* set_ether_iface(char* tok) {
+  return strncpy(ether_iface, tok, 30);
+}
+
+char* get_ether_iface() {
+  return ether_iface;
+}
+
+intmax_t enet_init() {
   struct ifreq ifr;
   int fd,
     err,
@@ -49,31 +58,29 @@ int enet_init() {
   return fd;
 }
 
-void ether_tx_pkt(uint8_t* data, uint32_t len) {
-  ssize_t res = 0;
-  if (ether_fd < 0) {
-    perror("ether: ether_fd not valid");
-    return;
-  }
-  printf("Ether: Sending %d bytes\n",len+4);
-  res = write(ether_fd,data-4,len+4);
+intmax_t  ether_tx_pkt(intmax_t ether_fd, uint8_t* data, uint32_t len) {
+  intmax_t  res = write(ether_fd, data-4, len + 4);
   if (res < 0) {
-    perror("ether:write()");
+    int error_number = errno;
+    error(0,0, "%s", strerror(error_number));
+    error(0, 0, "read() generated error code(%d); res (%li)", error_number, res);
   }
+  return res;
 }
 
-uint32_t enet_rx_pkt() {
-  ssize_t res = 0;
-  if (ether_fd < 0) {
-    return 0;
-  }
-  res = read(ether_fd, ether_rx_buf, (0x800-2));
+intmax_t enet_rx_pkt(intmax_t ether_fd, uint8_t* data, uint32_t len) {
+  // ssize_t res = read(ether_fd, ether_rx_buf, (0x800 - 2));
+  intmax_t res = read(ether_fd, data, len);
   if (res < 0) {
-    if (errno != EAGAIN && errno != EWOULDBLOCK) {
-      perror("ether:read()");
+    if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
+      error(0, 0, "read() generated error code(%d); res (%li)", errno, res);
+    } else {
+      // generates too many messages
+      // error(0,
+      // 	    0,
+      // 	    "read() generated error code(%d): EAGAIN or EWOULDBLOCK; res (%d)",
+      // 	    errno, res);
     }
-    return 0;
   }
-  // printf("Done! Got %d bytes\n",(int)res);
   return res;
 }
